@@ -15,8 +15,8 @@ x = T.matrix('x')
 t = T.ivector('t')
 
 # forward pass
-W1 = theano.shared(np.random.randn(
-    size[0], size[1]).astype('float32'),
+W1 = theano.shared(
+    np.random.randn(size[0], size[1]).astype('float32'),
     name="W1", borrow=True)
 Wb1 = theano.shared(
     np.asarray(0, dtype='float32'),
@@ -35,7 +35,7 @@ a2 = T.dot(b1, W2) + Wb2
 y = T.nnet.softmax(a2)
 
 # training error
-# Confim that categorical_crossentropy doesn't sum
+# `categorical_crossentropy` returns a vector with the entropy for each value
 L = T.mean(T.nnet.categorical_crossentropy(y, t))
 
 # backward pass
