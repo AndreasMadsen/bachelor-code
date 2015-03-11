@@ -3,19 +3,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import theano
 import theano.tensor as T
-
-
-def generate_dataset(items):
-    X = np.random.uniform(low=-1, high=1, size=(items, 2)).astype('float32')
-
-    t = np.zeros(items, dtype='int32')
-    t += np.all([X[:, 0] < 0, X[:, 1] >= 0], axis=0) * 1
-    t += np.all([X[:, 0] < 0, X[:, 1] < 0], axis=0) * 2
-    t += np.all([X[:, 0] >= 0, X[:, 1] < 0], axis=0) * 3
-    return (X, t)
+from datasets import generate_quadrant
 
 size = [2, 10, 4]
-eta = 0.1
+eta = 0.4
+momentum = 0.9
+epochs = 400
 
 # data input & output
 x = T.matrix('x')
@@ -38,35 +31,60 @@ y = T.nnet.softmax(a2)
 
 # training error
 # Confim that categorical_crossentropy doesn't sum
-L = T.sum(T.nnet.categorical_crossentropy(y, t))
+L = T.mean(T.nnet.categorical_crossentropy(y, t))
 
 # backward pass
 (gW1, gW2) = T.grad(L, [W1, W2])
+dW1 = theano.shared(
+    np.zeros_like(W1.get_value(), dtype='float32'),
+    name="dW1", borrow=True)
+dW2 = theano.shared(
+    np.zeros_like(W2.get_value(), dtype='float32'),
+    name="dW1", borrow=True)
 
 # Compile
-# TODO: add momentum
+# NOTE: all updates are made with the old values, thus the order of operation
+# doesn't matter. To make momentum work without a delay as in
+# http://stackoverflow.com/questions/28205589/the-update-order-of-theano-functions-update-list
+# the update equation (dW1) is inserted into the `W1 = W1 + dW1` update.
 train = theano.function(
     inputs=[x, t],
-    outputs=[],
-    updates=((W1, W1 - eta * gW1), (W2, W2 - eta * gW2)))
+    outputs=L,
+    updates=((dW1, - momentum * dW1 - eta * gW1), (W1, W1 - momentum * dW1 - eta * gW1),
+             (dW2, - momentum * dW2 - eta * gW2), (W2, W2 - momentum * dW2 - eta * gW2))
+)
 
+error = theano.function(inputs=[x, t], outputs=L)
 predict = theano.function(inputs=[x], outputs=y)
 
 # Generate dataset
-(train_X, train_t) = generate_dataset(1000)
-(test_X, test_t) = generate_dataset(300)
+(train_X, train_t) = generate_quadrant(1000)
+(test_X, test_t) = generate_quadrant(300)
 
-for epoch in range(0, 10):
-    train(train_X, train_t)
+train_error = np.zeros(epochs)
+test_error = np.zeros(epochs)
+
+for epoch in range(0, epochs):
+    train_error[epoch] = train(train_X, train_t)
+    test_error[epoch] = error(test_X, test_t)
 print(W1.get_value())
 print(W2.get_value())
 
 predict_y = np.argmax(predict(test_X), axis=1)
-print(predict_y)
+
+
+plt.subplot(2, 1, 1)
+plt.plot(np.arange(0, epochs), train_error, label='train', alpha=0.5)
+plt.plot(np.arange(0, epochs), test_error, label='test', alpha=0.5)
+plt.legend()
+plt.ylabel('loss')
+
+plt.subplot(2, 1, 2)
 colors = np.asarray(["#ca0020", "#f4a582", "#92c5de", "#0571b0"])
 plt.scatter(test_X[:, 0], test_X[:, 1], c=colors[predict_y], lw=0)
 plt.axhline(y=0, xmin=-1, xmax=1, color="gray")
 plt.axvline(x=0, ymin=-1, ymax=1, color="gray")
 plt.xlim([-1, 1])
 plt.ylim([-1, 1])
+
 plt.show()
