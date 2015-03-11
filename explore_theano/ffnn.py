@@ -15,17 +15,22 @@ x = T.matrix('x')
 t = T.ivector('t')
 
 # forward pass
-# TODO: add another hidden layer and bias unit
 W1 = theano.shared(np.random.randn(
     size[0], size[1]).astype('float32'),
     name="W1", borrow=True)
-a1 = T.dot(x, W1)
+Wb1 = theano.shared(
+    np.asarray(0, dtype='float32'),
+    name="Wb1", borrow=True)
+a1 = T.dot(x, W1) + Wb1
 b1 = T.nnet.sigmoid(a1)
 
 W2 = theano.shared(
     np.random.randn(size[1], size[2]).astype('float32'),
     name="W2", borrow=True)
-a2 = T.dot(b1, W2)
+Wb2 = theano.shared(
+    np.asarray(0, dtype='float32'),
+    name="Wb1", borrow=True)
+a2 = T.dot(b1, W2) + Wb2
 
 y = T.nnet.softmax(a2)
 
@@ -34,13 +39,19 @@ y = T.nnet.softmax(a2)
 L = T.mean(T.nnet.categorical_crossentropy(y, t))
 
 # backward pass
-(gW1, gW2) = T.grad(L, [W1, W2])
+(gW1, gWb1, gW2, gWb2) = T.grad(L, [W1, Wb1, W2, Wb2])
 dW1 = theano.shared(
     np.zeros_like(W1.get_value(), dtype='float32'),
     name="dW1", borrow=True)
+dWb1 = theano.shared(
+    np.zeros_like(Wb1.get_value(), dtype='float32'),
+    name="dWb1", borrow=True)
 dW2 = theano.shared(
     np.zeros_like(W2.get_value(), dtype='float32'),
     name="dW1", borrow=True)
+dWb2 = theano.shared(
+    np.zeros_like(Wb2.get_value(), dtype='float32'),
+    name="dWb2", borrow=True)
 
 # Compile
 # NOTE: all updates are made with the old values, thus the order of operation
@@ -51,7 +62,9 @@ train = theano.function(
     inputs=[x, t],
     outputs=L,
     updates=((dW1, - momentum * dW1 - eta * gW1), (W1, W1 - momentum * dW1 - eta * gW1),
-             (dW2, - momentum * dW2 - eta * gW2), (W2, W2 - momentum * dW2 - eta * gW2))
+             (dWb1, - momentum * dWb1 - eta * gWb1), (Wb1, Wb1 - momentum * dWb1 - eta * gWb1),
+             (dW2, - momentum * dW2 - eta * gW2), (W2, W2 - momentum * dW2 - eta * gW2),
+             (dWb2, - momentum * dWb2 - eta * gWb2), (Wb2, Wb2 - momentum * dWb2 - eta * gWb2))
 )
 
 error = theano.function(inputs=[x, t], outputs=L)
@@ -67,8 +80,8 @@ test_error = np.zeros(epochs)
 for epoch in range(0, epochs):
     train_error[epoch] = train(train_X, train_t)
     test_error[epoch] = error(test_X, test_t)
-print(W1.get_value())
-print(W2.get_value())
+print(W1.get_value(), Wb1.get_value())
+print(W2.get_value(), Wb2.get_value())
 
 predict_y = np.argmax(predict(test_X), axis=1)
 
