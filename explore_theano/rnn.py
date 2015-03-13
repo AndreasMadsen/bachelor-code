@@ -21,14 +21,16 @@ momentum = 0.9
 epochs = 100
 
 # data input & output
-x = T.matrix('x')
-t = T.ivector('t')
+x = T.tensor3('x')
+t = T.imatrix('t')
 
-test_value = generate_accumulated(1)
-x.tag.test_value = test_value[0][0].T
-t.tag.test_value = test_value[1][0]
+test_value = generate_accumulated(10)
+x.tag.test_value = test_value[0]
+t.tag.test_value = test_value[1]
 
+#
 # forward pass
+#
 W01 = theano.shared(
     np.random.randn(size[0], size[1]).astype('float32'),
     name="W01", borrow=True)
@@ -39,34 +41,53 @@ W12 = theano.shared(
     np.random.randn(size[1], size[2]).astype('float32'),
     name="W12", borrow=True)
 
-
-def scanner(x_t, b1_tm1, W01, W11, W12):
+def forward_scanner(x_t, b1_tm1, W01, W11, W12):
     a1_t = T.dot(x_t, W01) + T.dot(b1_tm1, W11)
     b1_t = T.nnet.sigmoid(a1_t)
 
     a2_t = T.dot(b1_t, W12)
-    y_t = T.nnet.softmax(a2_t)[0]  # softmax always returns a matrix -- wired
+    y_t = T.nnet.softmax(a2_t)
 
     return (b1_t, y_t)
 
-# b1 and y are matrices with each result at time $t$, in row $t$
+# because scan assmes the iterable is the first tensor dimension, x is
+# transposed into (time, obs, dims).
+# When done $b1$ and $y$ will be tensors with the shape (time, obs, dims)
+# this is then transposed back to its original format
 (b1, y), _ = theano.scan(
-    fn=scanner,
-    sequences=x,  # iterate over rows (time)
+    fn=forward_scanner,
+    sequences=x.transpose(2, 0, 1),  # iterate (time), row (observations), col (dims)
     outputs_info=[
-        T.zeros(size[1], dtype='float32'),  # b1_tm1
+        T.zeros((x.shape[0], size[1]), dtype='float32'),  # b1_tm1 (ops x dims)
         None  # y_t
     ],
     non_sequences=[
         W01, W11, W12
     ]
 )
+y = y.transpose(1, 2, 0)  # transpose back to (obs, dims, time)
 
+#
 # training error
-# `categorical_crossentropy` returns a vector with the entropy for each value
-L = T.mean(T.nnet.categorical_crossentropy(y, t))
+#
+def error_scanner(y_t, t_t):
+    # `categorical_crossentropy` returns a vector with the entropy for each value
+    return T.mean(T.nnet.categorical_crossentropy(y_t, t_t))
 
+# Because crossentropy assumes a matrix (y) and y is a tensor, scan along the
+# time axis. t have the format (obs, time).
+# The return value is a vector of the mean crossentropy for each time step,
+# mean that to create a single value.
+L, _ = theano.scan(
+    fn=error_scanner,
+    sequences=[y.transpose(2, 0, 1), t.transpose(1, 0)],
+    outputs_info=[None]
+)
+L = T.mean(L)
+
+#
 # backward pass
+#
 (gW01, gW11, gW12) = T.grad(L, [W01, W11, W12])
 
 # Compile
@@ -93,21 +114,10 @@ train_error = np.zeros(epochs)
 test_error = np.zeros(epochs)
 
 for epoch in range(0, epochs):
-    # NOTE: not randomize
+    train_error[epoch] = train(train_X, train_t)
+    test_error[epoch] = train(test_X, test_t)
 
-    epoch_train_error = np.zeros_like(train_t)
-    for i, obs_X, obs_t in zip(range(0, train_t.shape[0]), train_X, train_t):
-        epoch_train_error[i] = train(obs_X.T, obs_t)
-    train_error[epoch] = np.mean(epoch_train_error)
-
-    epoch_test_error = np.zeros_like(test_t)
-    for i, obs_X, obs_t in zip(range(0, test_t.shape[0]), test_X, test_t):
-        epoch_test_error[i] = error(obs_X.T, obs_t)
-    test_error[epoch] = np.mean(epoch_test_error)
-
-predict_y = np.zeros((test_t.shape[0], test_t.shape[1], size[2]))
-for i, obs_X, obs_t in zip(range(0, test_t.shape[0]), test_X, test_t):
-    predict_y[i, :, :] = predict(obs_X.T)
+predict_y = predict(test_X)
 
 print(predict_y[1:10, :, :])
 print(test_t[1:10, :])
