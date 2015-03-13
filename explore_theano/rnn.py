@@ -3,7 +3,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import theano
 import theano.tensor as T
-from datasets import generate_quadrant
+from datasets import generate_accumulated
+
+# compute_test_value is 'off' by default, meaning this feature is inactive
+theano.config.compute_test_value = 'warn'  # Use 'warn' to activate this feature
 
 # https://gist.github.com/AndreasMadsen/abd0624f2e88057bcc19#file-rnn-py-L37
 # https://groups.google.com/forum/#!msg/theano-users/93gGzBkyswM/0oppbNxrm5IJ
@@ -12,14 +15,18 @@ from datasets import generate_quadrant
 # Step one, online gradient decent
 # Step two, batch gradient decent (transpose, perhaps alloc)
 
-size = [2, 10, 4]
+size = [2, 100, 2]
 eta = 0.4
 momentum = 0.9
-epochs = 400
+epochs = 100
 
 # data input & output
 x = T.matrix('x')
 t = T.ivector('t')
+
+test_value = generate_accumulated(1)
+x.tag.test_value = test_value[0][0].T
+t.tag.test_value = test_value[1][0]
 
 # forward pass
 W01 = theano.shared(
@@ -28,28 +35,39 @@ W01 = theano.shared(
 W11 = theano.shared(
     np.random.randn(size[1], size[1]).astype('float32'),
     name="W11", borrow=True)
-a1 = T.dot(x, W01)
-b1 = T.nnet.sigmoid(a1)
-
 W12 = theano.shared(
     np.random.randn(size[1], size[2]).astype('float32'),
     name="W12", borrow=True)
-a2 = T.dot(b1, W12)
 
-y = T.nnet.softmax(a2)
+
+def scanner(x_t, b1_tm1, W01, W11, W12):
+    a1_t = T.dot(x_t, W01) + T.dot(b1_tm1, W11)
+    b1_t = T.nnet.sigmoid(a1_t)
+
+    a2_t = T.dot(b1_t, W12)
+    y_t = T.nnet.softmax(a2_t)[0]  # softmax always returns a matrix -- wired
+
+    return (b1_t, y_t)
+
+# b1 and y are matrices with each result at time $t$, in row $t$
+(b1, y), _ = theano.scan(
+    fn=scanner,
+    sequences=x,  # iterate over rows (time)
+    outputs_info=[
+        T.zeros(size[1], dtype='float32'),  # b1_tm1
+        None  # y_t
+    ],
+    non_sequences=[
+        W01, W11, W12
+    ]
+)
 
 # training error
 # `categorical_crossentropy` returns a vector with the entropy for each value
 L = T.mean(T.nnet.categorical_crossentropy(y, t))
 
 # backward pass
-(gW01, gW12) = T.grad(L, [W01, W12])
-dW01 = theano.shared(
-    np.zeros_like(W01.get_value(), dtype='float32'),
-    name="dW1", borrow=True)
-dW12 = theano.shared(
-    np.zeros_like(W12.get_value(), dtype='float32'),
-    name="dW1", borrow=True)
+(gW01, gW11, gW12) = T.grad(L, [W01, W11, W12])
 
 # Compile
 # NOTE: all updates are made with the old values, thus the order of operation
@@ -59,45 +77,48 @@ dW12 = theano.shared(
 train = theano.function(
     inputs=[x, t],
     outputs=L,
-    updates=((dW01, - momentum * dW01 - eta * gW01), (W01, W01 - momentum * dW01 - eta * gW01),
-             (dW12, - momentum * dW12 - eta * gW12), (W12, W12 - momentum * dW12 - eta * gW12))
+    updates=((W01, W01 - eta * gW01),
+             (W11, W11 - eta * gW11),
+             (W12, W12 - eta * gW12))
 )
 
 error = theano.function(inputs=[x, t], outputs=L)
 predict = theano.function(inputs=[x], outputs=y)
 
 # Generate dataset
-(train_X, train_t) = generate_quadrant(1000)
-(test_X, test_t) = generate_quadrant(300)
+(train_X, train_t) = generate_accumulated(500)
+(test_X, test_t) = generate_accumulated(100)
 
 train_error = np.zeros(epochs)
 test_error = np.zeros(epochs)
 
 for epoch in range(0, epochs):
     # NOTE: not randomize
-    for obs_X, obs_t in zip(train_X, train_t):
-        train_error[epoch] = train(obs_X.reshape(1, size[0]), obs_t.reshape(1))
 
-    # use last train error and calculate test error
-    test_error[epoch] = error(test_X, test_t)
-print(W01.get_value())
-print(W12.get_value())
+    epoch_train_error = np.zeros_like(train_t)
+    for i, obs_X, obs_t in zip(range(0, train_t.shape[0]), train_X, train_t):
+        epoch_train_error[i] = train(obs_X.T, obs_t)
+    train_error[epoch] = np.mean(epoch_train_error)
 
-predict_y = np.argmax(predict(test_X), axis=1)
+    epoch_test_error = np.zeros_like(test_t)
+    for i, obs_X, obs_t in zip(range(0, test_t.shape[0]), test_X, test_t):
+        epoch_test_error[i] = error(obs_X.T, obs_t)
+    test_error[epoch] = np.mean(epoch_test_error)
 
+predict_y = np.zeros((test_t.shape[0], test_t.shape[1], size[2]))
+for i, obs_X, obs_t in zip(range(0, test_t.shape[0]), test_X, test_t):
+    predict_y[i, :, :] = predict(obs_X.T)
 
-plt.subplot(2, 1, 1)
+print(predict_y[1:10, :, :])
+print(test_t[1:10, :])
+
+print('last epoch')
+print('  train error: %f' % (train_error[-1]))
+print('  test error: %f' % (test_error[-1]))
+
+# NOTE: naïve mean guess should give 3/8
 plt.plot(np.arange(0, epochs), train_error, label='train', alpha=0.5)
 plt.plot(np.arange(0, epochs), test_error, label='test', alpha=0.5)
 plt.legend()
 plt.ylabel('loss')
-
-plt.subplot(2, 1, 2)
-colors = np.asarray(["#ca0020", "#f4a582", "#92c5de", "#0571b0"])
-plt.scatter(test_X[:, 0], test_X[:, 1], c=colors[predict_y], lw=0)
-plt.axhline(y=0, xmin=-1, xmax=1, color="gray")
-plt.axvline(x=0, ymin=-1, ymax=1, color="gray")
-plt.xlim([-1, 1])
-plt.ylim([-1, 1])
-
 plt.show()

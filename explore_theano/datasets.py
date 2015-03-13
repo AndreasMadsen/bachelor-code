@@ -17,5 +17,5 @@ def generate_accumulated(items, T=5):
 
     t = np.sum(X, axis=1)
     t = np.cumsum(t, axis=1)
-    t = np.mod(t, 10)
-    return (X.astype('int32'), t.astype('int32'))
+    t = np.mod(t, 2)
+    return (X.astype('float32'), t.astype('int32'))
