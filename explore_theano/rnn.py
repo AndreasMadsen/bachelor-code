@@ -74,7 +74,11 @@ train_error = np.zeros(epochs)
 test_error = np.zeros(epochs)
 
 for epoch in range(0, epochs):
-    train_error[epoch] = train(train_X, train_t)
+    # NOTE: not randomize
+    for obs_X, obs_t in zip(train_X, train_t):
+        train_error[epoch] = train(obs_X.reshape(1, size[0]), obs_t.reshape(1))
+
+    # use last train error and calculate test error
     test_error[epoch] = error(test_X, test_t)
 print(W01.get_value())
 print(W12.get_value())
