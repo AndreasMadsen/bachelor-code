@@ -78,12 +78,13 @@ def error_scanner(y_t, t_t):
 # time axis. t have the format (obs, time).
 # The return value is a vector of the mean crossentropy for each time step,
 # mean that to create a single value.
-L, _ = theano.scan(
-    fn=error_scanner,
-    sequences=[y.transpose(2, 0, 1), t.transpose(1, 0)],
-    outputs_info=[None]
-)
-L = T.mean(L)
+def crossentropy(y, t):
+    t = t.ravel()
+    y = y.transpose(1, 0, 2).reshape((y.shape[1], y.shape[2] * y.shape[0]))
+    y = y[t, T.arange(0, y.shape[1])]
+    return - T.mean(T.log(y))
+
+L = crossentropy(y, t)
 
 #
 # backward pass
