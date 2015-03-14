@@ -79,10 +79,16 @@ def error_scanner(y_t, t_t):
 # The return value is a vector of the mean crossentropy for each time step,
 # mean that to create a single value.
 def crossentropy(y, t):
+    """
+    Calculates crossentropy for 3d tensor y and index matrix t
+
+    Because nnet.categorical_crossentropy only takes y as matrix, y and t
+    is reshaped intro the matrix/vector format that nnet.categorical_crossentropy
+    expects.
+    """
     t = t.ravel()
-    y = y.transpose(1, 0, 2).reshape((y.shape[1], y.shape[2] * y.shape[0]))
-    y = y[t, T.arange(0, y.shape[1])]
-    return - T.mean(T.log(y))
+    y = y.transpose(0, 2, 1).reshape((y.shape[2] * y.shape[0], y.shape[1]))
+    return T.mean(T.nnet.categorical_crossentropy(y, t))
 
 L = crossentropy(y, t)
 
