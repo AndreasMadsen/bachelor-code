@@ -16,9 +16,9 @@ theano.config.compute_test_value = 'warn'  # Use 'warn' to activate this feature
 # Step two, batch gradient decent (transpose, perhaps alloc)
 
 size = [2, 100, 2]
-eta = 0.4
-momentum = 0.9
-epochs = 100
+eta = 0.01
+momentum = 0.1
+epochs = 200
 
 # data input & output
 x = T.tensor3('x')
@@ -97,6 +97,14 @@ L = crossentropy(y, t)
 #
 (gW01, gW11, gW12) = T.grad(L, [W01, W11, W12])
 
+def momentum_gradient_decent(gW, W):
+    dW_tm1 = theano.shared(
+        np.zeros_like(W.get_value(), dtype='float32'),
+        name="dW" + W.name, borrow=True)
+
+    dW = - momentum * dW_tm1 - eta * gW
+    return ((dW_tm1, dW), (W, W + dW))
+
 # Compile
 # NOTE: all updates are made with the old values, thus the order of operation
 # doesn't matter. To make momentum work without a delay as in
@@ -105,9 +113,11 @@ L = crossentropy(y, t)
 train = theano.function(
     inputs=[x, t],
     outputs=L,
-    updates=((W01, W01 - eta * gW01),
-             (W11, W11 - eta * gW11),
-             (W12, W12 - eta * gW12))
+    updates=(
+        momentum_gradient_decent(gW01, W01) +
+        momentum_gradient_decent(gW11, W11) +
+        momentum_gradient_decent(gW12, W12)
+    )
 )
 
 error = theano.function(inputs=[x, t], outputs=L)
