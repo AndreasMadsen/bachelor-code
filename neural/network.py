@@ -1,9 +1,9 @@
 
+import itertools
+
 import numpy as np
 import theano
 import theano.tensor as T
-
-from neural.input_layer import Input as InputLayer
 
 class Network:
     """
@@ -11,8 +11,8 @@ class Network:
     """
 
     def __init__(self, eta=0.1, momentum=0.9):
-        self._target = T.imatrix('t')
         self._input = T.tensor3('x')
+        self._target = T.imatrix('t')
 
         self._eta = eta
         self._momentum = momentum
@@ -20,8 +20,12 @@ class Network:
         self._layers = []
         self._loss = None
 
-    def set_input(self, size):
-        self._layers.append(InputLayer(size))
+    def test_value(self, x, t):
+        self._input.tag.test_value = x
+        self._target.tag.test_value = t
+
+    def set_input(self, layer):
+        self._layers.append(layer)
 
     def push_layer(self, layer):
         """
@@ -42,9 +46,17 @@ class Network:
         """
         Create a list containing all the network weights
         """
-        return itertools.chain(*[
+        return list(itertools.chain(*[
             layer.weights for layer in self._layers
-        ])
+        ]))
+
+    def _outputs_info_list(self):
+        """
+        Generate a list of outputs for the forward scanner
+        """
+        return list(itertools.chain(*[
+            layer.outputs_info for layer in self._layers
+        ]))
 
     def _infer_taps(self, outputs_info):
         taps = 0
@@ -60,30 +72,30 @@ class Network:
                     else:
                         taps += 1
             # If info is a numpy array or a scalar
-            else if (info is not None):
+            elif (info is not None):
                 taps += 1
 
         return taps
 
-    def _forward_scanner(self, *args):
+    def _forward_scanner(self, x_t, *args):
         """
         Defines the forward equations for each time step.
         """
         all_outputs = []
         curr = 0
-        prev_output = self._input
+        prev_output = x_t
 
         # Loop though each layer and apply send the previous layers output
         # to the next layer. The layer can have additional paramers, if
         # taps where provided using the `outputs_info` property.
         for layer in self._layers[1:]:
             taps = self._infer_taps(layer.outputs_info)
-            outputs = layer.scanner(prev_output, *args[curr:curr + taps])
+            layer_outputs = layer.scanner(prev_output, *args[curr:curr + taps])
 
             curr += taps
-            all_outputs += outputs
+            all_outputs += layer_outputs
             # the last output is assumed to be the layer output
-            prev_output = outputs[-1]
+            prev_output = layer_outputs[-1]
 
         return all_outputs
 
@@ -91,11 +103,6 @@ class Network:
         """
         Setup equations for the forward pass
         """
-        # Generate a list of outputs for the forward scanner
-        outputs_info = itertools.chain(*[
-            layer.outputs_info for layer in self._layers
-        ])
-
         # because scan assmes the iterable is the first tensor dimension, x is
         # transposed into (time, obs, dims).
         # When done $b1$ and $y$ will be tensors with the shape (time, obs, dims)
@@ -103,10 +110,13 @@ class Network:
         outputs, _ = theano.scan(
             fn=self._forward_scanner,
             sequences=x.transpose(2, 0, 1),  # iterate (time), row (observations), col (dims)
-            outputs_info=outputs_info
+            outputs_info=self._outputs_info_list()
         )
         # the last output is assumed to be the network output
-        y = outputs[-1]
+        if (isinstance(outputs, list)):
+            y = outputs[-1]
+        else:
+            y = outputs
         # transpose back to (obs, dims, time)
         y = y.transpose(1, 2, 0)
 
@@ -118,28 +128,28 @@ class Network:
         """
         return T.grad(L, self._weight_list())
 
-    def _momentum_gradient_decent(gWi, Wi):
+    def _momentum_gradient_decent(self, gWi, Wi):
         """
         The graident decent equation for a single weight matrix.
 
         This adds a momentum for better generalization. `eta` and `momentum`
         are statically define parameters.
         """
-        dWi_tm1 = theano.shared(
+        ΔWi_tm1 = theano.shared(
             np.zeros_like(Wi.get_value(), dtype='float32'),
-            name="d" + Wi.name, borrow=True)
+            name="Δ" + Wi.name, borrow=True)
 
-        dWi = - self._momentum * dWi_tm1 - self._eta * gWi
-        return ((dWi_tm1, dWi), (Wi, Wi + dWi))
+        ΔWi = - self._momentum * ΔWi_tm1 - self._eta * gWi
+        return [(ΔWi_tm1, ΔWi), (Wi, Wi + ΔWi)]
 
     def _update_functions(self, gW):
         """
         Generate update equations for the weights
         """
-        return [
-            self_momentum_gradient_decent(gWi, Wi) for (gWi, Wi)
+        return list(itertools.chain(*[
+            self._momentum_gradient_decent(gWi, Wi) for (gWi, Wi)
             in zip(gW, self._weight_list())
-        ]
+        ]))
 
     def compile(self):
         """
@@ -158,7 +168,7 @@ class Network:
         L = self._loss.loss(y, self._target)
 
         # Generate backward pass
-        gW = self._backward_pass(self, L)
+        gW = self._backward_pass(L)
 
         #
         # Setup functions
@@ -166,7 +176,13 @@ class Network:
         self.train = theano.function(
             inputs=[self._input, self._target],
             outputs=L,
-            updates=self._update_functions()
+            updates=self._update_functions(gW)
         )
-        self.error = theano.function(inputs=[x, t], outputs=L)
-        self.predict = theano.function(inputs=[x], outputs=y)
+        self.test = theano.function(
+            inputs=[self._input, self._target],
+            outputs=L
+        )
+        self.predict = theano.function(
+            inputs=[self._input],
+            outputs=y
+        )

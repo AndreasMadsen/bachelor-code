@@ -26,4 +26,4 @@ class Softmax:
         a_h1_t = T.dot(b_h0_t, self._W_h0_h1)
         y_h1_t = T.nnet.softmax(a_h1_t)
 
-        return (y_h1_t)
+        return [y_h1_t]
