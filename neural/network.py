@@ -3,6 +3,8 @@ import numpy as np
 import theano
 import theano.tensor as T
 
+from neural.input_layer import Input as InputLayer
+
 class Network:
     """
     Abstraction for creating recurent neural networks
@@ -16,7 +18,7 @@ class Network:
         self._momentum = momentum
 
         self._layers = []
-        self._loss_function = None
+        self._loss = None
 
     def set_input(self, size):
         self._layers.append(InputLayer(size))
@@ -33,7 +35,8 @@ class Network:
         """
         Set the loss function.
         """
-        self._loss_function = loss
+        loss.setup(self._input.shape[0], self._layers[-1])
+        self._loss = loss
 
     def _weight_list(self):
         """
@@ -152,7 +155,7 @@ class Network:
         y = self._forward_pass(self._input)
 
         # Setup loss function
-        L = self._loss_function(y, self._target)
+        L = self._loss.loss(y, self._target)
 
         # Generate backward pass
         gW = self._backward_pass(self, L)
