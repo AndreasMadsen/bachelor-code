@@ -18,11 +18,15 @@ class Network:
         self._layers = []
         self._loss_function = None
 
+    def set_input(self, size):
+        self._layers.append(InputLayer(size))
+
     def push_layer(self, layer):
         """
         Push a layer to the network. The order of the layers matches
         the order of the `push_layer` calls.
         """
+        layer.setup(self._input.shape[0], len(self._layers), self._layers[-1])
         self._layers.append(layer)
 
     def set_loss(self, loss):
@@ -64,19 +68,19 @@ class Network:
         """
         all_outputs = []
         curr = 0
-        prev_layer = self._input
+        prev_output = self._input
 
         # Loop though each layer and apply send the previous layers output
         # to the next layer. The layer can have additional paramers, if
         # taps where provided using the `outputs_info` property.
-        for layer in self._layers:
+        for layer in self._layers[1:]:
             taps = self._infer_taps(layer.outputs_info)
-            outputs = layer.scanner(prev_layer, *args[curr:curr + taps])
+            outputs = layer.scanner(prev_output, *args[curr:curr + taps])
 
             curr += taps
             all_outputs += outputs
             # the last output is assumed to be the layer output
-            prev_layer = outputs[-1]
+            prev_output = outputs[-1]
 
         return all_outputs
 
@@ -120,7 +124,7 @@ class Network:
         """
         dWi_tm1 = theano.shared(
             np.zeros_like(Wi.get_value(), dtype='float32'),
-            name="dW" + Wi.name, borrow=True)
+            name="d" + Wi.name, borrow=True)
 
         dWi = - self._momentum * dWi_tm1 - self._eta * gWi
         return ((dWi_tm1, dWi), (Wi, Wi + dWi))
