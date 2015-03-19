@@ -35,14 +35,16 @@ def _classifier_tester(model, generator, epochs=100, plot=False):
     assert(np.mean(np.argmax(y, axis=1) == test_dataset[1]) > 0.40)
 
 def test_logistic_classifier():
-    logistic = neural.Network(eta=0.4, momentum=0.9)
+    logistic = neural.network.Std(eta=0.4, momentum=0.9)
     # Setup theano tap.test_value
     logistic.test_value(*quadrant_classify(10))
 
     # Setup layers for a logistic classifier model
-    logistic.set_input(neural.Input(2))
-    logistic.push_layer(neural.Softmax(4))
-    logistic.set_loss(neural.NaiveEntropy())
+    logistic.set_input(neural.layer.Input(2))
+    logistic.push_layer(neural.layer.Softmax(4))
+
+    # Setup loss function
+    logistic.set_loss(neural.loss.NaiveEntropy())
 
     # Compile train, test and predict functions
     logistic.compile()
@@ -50,15 +52,17 @@ def test_logistic_classifier():
     _classifier_tester(logistic, quadrant_classify)
 
 def test_lstm_classifier():
-    lstm = neural.Network(eta=0.6, momentum=0.9)
+    lstm = neural.network.Std(eta=0.6, momentum=0.9)
     # Setup theano tap.test_value
     lstm.test_value(*quadrant_cumsum_classify(10))
 
     # Setup layers for a logistic classifier model
-    lstm.set_input(neural.Input(2))
-    lstm.push_layer(neural.LSTM(4))
-    lstm.push_layer(neural.Softmax(4))
-    lstm.set_loss(neural.NaiveEntropy())
+    lstm.set_input(neural.layer.Input(2))
+    lstm.push_layer(neural.layer.LSTM(4))
+    lstm.push_layer(neural.layer.Softmax(4))
+
+    # Setup loss function
+    lstm.set_loss(neural.loss.NaiveEntropy())
 
     # Compile train, test and predict functions
     lstm.compile()

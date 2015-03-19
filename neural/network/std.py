@@ -5,7 +5,7 @@ import numpy as np
 import theano
 import theano.tensor as T
 
-class Network:
+class StdNetwork:
     """
     Abstraction for creating recurent neural networks
     """
