@@ -18,19 +18,17 @@ class LSTM:
             name="W_%s%d_%s%d" % (symbol, index - 1, symbol, index),
             borrow=True
         )
-        self.weights.push(W01)
+        self.weights.append(W01)
 
         W11 = theano.shared(
             np.random.randn(size[1], size[1]).astype('float32'),
             name="W_%s%d_%s%d" % (symbol, index - 1, symbol, index),
             borrow=True
         )
-        self.weights.push(W11)
+        self.weights.append(W11)
 
-        def forward(b_h0_t, b_h1_tm1):
-            return T.dot(b_h0_t, W01) + T.dot(b_h1_tm1, W11)
-
-        return (W01, W11, forward)
+        return lambda b_h0_t, b_h1_tm1: \
+            T.dot(b_h0_t, W01) + T.dot(b_h1_tm1, W11)
 
     def setup(self, batch_size, layer_index, prev_layer):
         self.layer_index = layer_index
@@ -49,7 +47,7 @@ class LSTM:
         )
 
     def scanner(self, b_h0_t, s_c1_tm1, b_h1_tm1):
-        a_h1_t = forward_h(b_h0_t, b_h1_tm1)
+        a_h1_t = self._forward_h(b_h0_t, b_h1_tm1)
 
         b_ρ1_t = T.nnet.sigmoid(self._forward_ρ(b_h0_t, b_h1_tm1))
         b_ɸ1_t = T.nnet.sigmoid(self._forward_ɸ(b_h0_t, b_h1_tm1))
