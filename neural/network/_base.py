@@ -5,7 +5,7 @@ import numpy as np
 import theano
 import theano.tensor as T
 
-class BaseNetwork:
+class BaseAbstraction:
     def __init__(self, **kwargs):
         self._layers = []
 
@@ -20,7 +20,7 @@ class BaseNetwork:
         layer.setup(self._input.shape[0], len(self._layers), self._layers[-1])
         self._layers.append(layer)
 
-    def _weight_list(self):
+    def weight_list(self):
         """
         Create a list containing all the network weights
         """

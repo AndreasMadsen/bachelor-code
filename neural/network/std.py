@@ -5,17 +5,17 @@ import numpy as np
 import theano
 import theano.tensor as T
 
-from neural.network._base import BaseNetwork
-from neural.network._optimizer import OptimizerNetwork
+from neural.network._base import BaseAbstraction
+from neural.network._optimizer import OptimizerAbstraction
 
-class StdNetwork(OptimizerNetwork, BaseNetwork):
+class StdNetwork(OptimizerAbstraction, BaseAbstraction):
     """
     Abstraction for creating recurent neural networks
     """
 
     def __init__(self, **kwargs):
-        BaseNetwork.__init__(self, **kwargs)
-        OptimizerNetwork.__init__(self, **kwargs)
+        BaseAbstraction.__init__(self, **kwargs)
+        OptimizerAbstraction.__init__(self, **kwargs)
 
         self._input = T.tensor3('x')
         self._target = T.imatrix('t')

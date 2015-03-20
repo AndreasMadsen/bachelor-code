@@ -5,7 +5,7 @@ import numpy as np
 import theano
 import theano.tensor as T
 
-class OptimizerNetwork():
+class OptimizerAbstraction():
     def __init__(self, eta=0.1, momentum=0.9, **kwargs):
         self._eta = eta
         self._momentum = momentum
@@ -23,7 +23,7 @@ class OptimizerNetwork():
         """
         Derive equations for the backward pass
         """
-        return T.grad(L, self._weight_list())
+        return T.grad(L, self.weight_list())
 
     def _momentum_gradient_decent(self, gWi, Wi):
         """
@@ -45,7 +45,7 @@ class OptimizerNetwork():
         """
         return list(itertools.chain(*[
             self._momentum_gradient_decent(gWi, Wi) for (gWi, Wi)
-            in zip(gW, self._weight_list())
+            in zip(gW, self.weight_list())
         ]))
 
     def compile(self):
