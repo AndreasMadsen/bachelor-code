@@ -32,7 +32,7 @@ def _classifier_tester(model, generator, epochs=100, plot=False):
     y = model.predict(test_dataset[0])
     assert_equal(y.shape, (100, 4, 5))
     # 0.25 is random guess
-    assert(np.mean(np.argmax(y, axis=1) == test_dataset[1]) > 0.40)
+    assert(np.mean(np.argmax(y, axis=1) == test_dataset[1]) > 0.60)
 
 def test_logistic_classifier():
     logistic = neural.network.Std(eta=0.4, momentum=0.9)
@@ -50,6 +50,24 @@ def test_logistic_classifier():
     logistic.compile()
 
     _classifier_tester(logistic, quadrant_classify)
+
+def test_rnn_classifier():
+    rnn = neural.network.Std(eta=0.6, momentum=0.9)
+    # Setup theano tap.test_value
+    rnn.test_value(*quadrant_cumsum_classify(10))
+
+    # Setup layers for a logistic classifier model
+    rnn.set_input(neural.layer.Input(2))
+    rnn.push_layer(neural.layer.RNN(4))
+    rnn.push_layer(neural.layer.Softmax(4))
+
+    # Setup loss function
+    rnn.set_loss(neural.loss.NaiveEntropy())
+
+    # Compile train, test and predict functions
+    rnn.compile()
+
+    _classifier_tester(rnn, quadrant_cumsum_classify, epochs=800)
 
 def test_lstm_classifier():
     lstm = neural.network.Std(eta=0.6, momentum=0.9)

@@ -1,6 +1,10 @@
+
+import warnings
 import os.path as path
 import sys
 import theano
+
+warnings.filterwarnings('ignore', 'numpy.ndarray size changed, may indicate binary incompatibility')
 
 thisdir = path.dirname(path.realpath(__file__))
 sys.path.append(path.join(thisdir, '..'))
