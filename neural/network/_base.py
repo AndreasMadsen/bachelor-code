@@ -55,5 +55,12 @@ class BaseAbstraction:
 
         return taps
 
+    def _last_output(self, outputs):
+        if (isinstance(outputs, list)):
+            y = outputs[-1]
+        else:
+            y = outputs
+        return y
+
     def forward_pass(self, x):
         raise NotImplemented

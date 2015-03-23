@@ -60,10 +60,8 @@ class StdNetwork(OptimizerAbstraction, BaseAbstraction):
             outputs_info=self._outputs_info_list()
         )
         # the last output is assumed to be the network output
-        if (isinstance(outputs, list)):
-            y = outputs[-1]
-        else:
-            y = outputs
+        y = self._last_output(outputs)
+
         # transpose back to (obs, dims, time)
         y = y.transpose(1, 2, 0)
 
