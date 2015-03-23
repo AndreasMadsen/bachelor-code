@@ -54,6 +54,6 @@ class LSTM:
         b_ω1_t = T.nnet.sigmoid(self._forward_ω(b_h0_t, b_h1_tm1))
 
         s_c1_t = b_ɸ1_t * s_c1_tm1 + b_ρ1_t * T.nnet.sigmoid(a_h1_t)
-        b_h1_t = b_ω1_t * T.nnet.softmax(s_c1_t)
+        b_h1_t = b_ω1_t * T.nnet.sigmoid(s_c1_t)
 
         return [s_c1_t, b_h1_t]
