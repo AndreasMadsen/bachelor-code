@@ -22,8 +22,11 @@ class Softmax:
         self.weights.append(self._W_h0_h1)
         self.outputs_info.append(None)
 
-    def scanner(self, b_h0_t):
+    def scanner(self, b_h0_t, mask=None):
         a_h1_t = T.dot(b_h0_t, self._W_h0_h1)
         y_h1_t = T.nnet.softmax(a_h1_t)
+
+        # It is not nessarry to do something with the mask,
+        # as the input values will stay constant.
 
         return [y_h1_t]

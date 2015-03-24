@@ -46,14 +46,23 @@ class LSTM:
             T.zeros((batch_size, self.output_size), dtype='float32'),  # b_h_tm1 (ops x dims)
         )
 
-    def scanner(self, b_h0_t, s_c1_tm1, b_h1_tm1):
+    def scanner(self, b_h0_t, s_c1_tm1, b_h1_tm1, mask=None):
         a_h1_t = self._forward_h(b_h0_t, b_h1_tm1)
 
+        # TODO: Søren said this could be optimized by combining all the weights
+        # intro just two matrices. W01 and W11. The X * W01 can also be put
+        # outside the scanner (maybe theano does this automatically).
         b_ρ1_t = T.nnet.sigmoid(self._forward_ρ(b_h0_t, b_h1_tm1))
         b_ɸ1_t = T.nnet.sigmoid(self._forward_ɸ(b_h0_t, b_h1_tm1))
         b_ω1_t = T.nnet.sigmoid(self._forward_ω(b_h0_t, b_h1_tm1))
 
         s_c1_t = b_ɸ1_t * s_c1_tm1 + b_ρ1_t * T.nnet.sigmoid(a_h1_t)
         b_h1_t = b_ω1_t * T.nnet.sigmoid(s_c1_t)
+
+        # If mask value is 1, return the results from previous iteration
+        # TODO: todo consider a more efficent way of doing this
+        if (mask is not None):
+            s_c1_t = s_c1_t * (1 - mask) + s_c1_tm1 * mask
+            b_h1_t = b_h1_t * (1 - mask) + b_h1_tm1 * mask
 
         return [s_c1_t, b_h1_t]

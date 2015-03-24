@@ -40,8 +40,13 @@ class RNN:
             T.zeros((batch_size, self.output_size), dtype='float32'),  # b_h_tm1 (ops x dims)
         )
 
-    def scanner(self, b_h0_t, b_h1_tm1):
+    def scanner(self, b_h0_t, b_h1_tm1, mask=None):
         a_h1_t = self._forward(b_h0_t, b_h1_tm1)
         b_h1_t = T.nnet.sigmoid(a_h1_t)
+
+        # If mask value is 1, return the results from previous iteration
+        # TODO: todo consider a more efficent way of doing this
+        if (mask is not None):
+            b_h1_t = b_h1_t * (1 - mask) + b_h1_tm1 * mask
 
         return [b_h1_t]
