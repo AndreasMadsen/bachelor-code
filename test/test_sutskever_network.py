@@ -51,6 +51,8 @@ def test_sutskever_encoder():
     b = encoder.forward_pass(x_input)
 
     # Assert output
+    assert_equal(y.tag.test_value.shape, (2, 4))
+
     assert(np.allclose(b.tag.test_value, [
         [0.86412394, 0.27515879, 0.74134195, 0.82611161],
         [0.86167115, 0.28139967, 0.78435278, 0.85536474]
@@ -99,6 +101,8 @@ def test_sutskever_decoder():
     y = decoder.forward_pass(b_input)
 
     # Assert output
+    assert_equal(y.tag.test_value.shape, (2, 3, 2))
+
     # The first sequences ends after 1 iteration
     y0 = y[:, :, 0]
     assert(np.allclose(y0.tag.test_value, [
