@@ -20,8 +20,9 @@ class SutskeverNetwork(OptimizerAbstraction):
         self._target = T.imatrix('t')
 
         # encoder -> decoder
+        # TODO: change this to take shape as input
         self._encoder = Encoder(self._input)
-        self._decoder = Decoder()
+        self._decoder = Decoder(self._input)
 
     def weight_list(self):
         """
@@ -30,17 +31,14 @@ class SutskeverNetwork(OptimizerAbstraction):
         return self._encoder.weight_list() + self._decoder.weight_list()
 
     def test_value(self, x, t):
-        # TODO: insert <EOF> tag
         self._input.tag.test_value = x
         self._target.tag.test_value = t
 
     def forward_pass(self, x):
-        # TODO: insert <EOF> tag
-        # TODO: build mask vector (start_mask)
-        b_enc_end = self._encoder.forward_pass(x, start_mask)
-        (end_mask, y) = self._decoder.forward_pass(b_enc_end)
+        b_enc = self._encoder.forward_pass(x)
+        y = self._decoder.forward_pass(b_enc)
 
-        return (end_mask, y)
+        return y
 
 class Encoder(BaseAbstraction):
     """
@@ -55,12 +53,11 @@ class Encoder(BaseAbstraction):
         super().__init__(**kwargs)
         self._input = x_input
 
-    def _forward_scanner(self, t, x_t, *args):
+    def _forward_scanner(self, x_t, *args):
         """
         Defines the forward equations for each time step.
         """
         args = list(args)
-        start_mask = args.pop()
 
         # Intialize loop
         all_outputs = []
@@ -68,40 +65,23 @@ class Encoder(BaseAbstraction):
         prev_output = x_t
 
         # Mask the inputs
-        mask = (t >= start_mask).nonzero()[0]
-        prev_output = prev_output[mask, :]
-        args = [data[mask, :] for data in args]
+        mask = T.eq(x_t[:, 0], 1).dimshuffle((0, 'x'))  # is <EOF>
 
         # Loop though each layer and apply send the previous layers output
         # to the next layer. The layer can have additional paramers, if
         # taps where provided using the `outputs_info` property.
         for layer in self._layers[1:]:
             taps = self._infer_taps(layer)
-            layer_outputs = layer.scanner(prev_output, *args[curr:curr + taps])
+            layer_outputs = layer.scanner(prev_output, *args[curr:curr + taps], mask=mask)
 
             curr += taps
             all_outputs += layer_outputs
             # the last output is assumed to be the layer output
             prev_output = layer_outputs[-1]
 
-        print(prev_output.tag.test_value)
+        return all_outputs
 
-        # Demask the outputs
-        all_outputs_demask = []
-        for output in all_outputs:
-            output_demask = T.zeros((x_t.shape[0], output.shape[1]))
-            print('demask:', output_demask.tag.test_value)
-            print('with:', output.tag.test_value)
-
-            # TODO: consider inplace optimization
-            T.set_subtensor(output_demask[mask, :], output)
-            print('demask:', output_demask.tag.test_value)
-
-            all_outputs_demask.append(output_demask)
-
-        return all_outputs_demask
-
-    def forward_pass(self, x, start_mask):
+    def forward_pass(self, x):
         """
         Setup equations for the forward pass
         """
@@ -112,11 +92,9 @@ class Encoder(BaseAbstraction):
         outputs, _ = theano.scan(
             fn=self._forward_scanner,
             sequences=[
-                T.arange(0, x.shape[2]),  # iterate a time index
                 x.transpose(2, 0, 1)  # iterate (time), row (observations), col (dims)
             ],
-            outputs_info=self._outputs_info_list(),
-            non_sequences=[start_mask]
+            outputs_info=self._outputs_info_list()
         )
         b_enc = self._last_output(outputs)
 
@@ -131,59 +109,58 @@ class Decoder(BaseAbstraction):
     obtained by letting the hidden output of $t$ go into $t + 1$. The <EOF>
     tag signals when to stop.
     """
-    def __init__(self, maxlength=100, **kwargs):
+    def __init__(self, b_input, maxlength=100, **kwargs):
         super().__init__(**kwargs)
+        self._input = b_input
         self._maxlength = maxlength
 
-    def _forward_scanner(self, t, end_mask, b_enc, *args):
+    def _forward_scanner(self, mask, *args):
         """
         Defines the forward equations for each time step.
         """
+        args = list(args)
+        y = args.pop()
+
         # Intialize loop
         all_outputs = []
         curr = 0
-        prev_output = b_enc
-
-        # Mask the inputs
-        mask = end_mask == -1
-        prev_output = prev_output[mask, :]
-        args = [data[mask, :] for data in args]
+        prev_output = y
+        mask = mask.dimshuffle((0, 'x'))
 
         # Loop though each layer and apply send the previous layers output
         # to the next layer. The layer can have additional paramers, if
         # taps where provided using the `outputs_info` property.
         for layer in self._layers[1:]:
             taps = self._infer_taps(layer)
-            layer_outputs = layer.scanner(prev_output, *args[curr:curr + taps])
+            layer_outputs = layer.scanner(prev_output, *args[curr:curr + taps], mask=mask)
 
             curr += taps
             all_outputs += layer_outputs
             # the last output is assumed to be the layer output
             prev_output = layer_outputs[-1]
 
-        # Demask the outputs
-        all_outputs_demask = []
-        for output in all_outputs:
-            # NOTE: this does not carry the result of previous iterations,
-            # the solution is to use the mask array to merge results from
-            # all time iterations.
-            output_demask = T.zeros((x_t.shape[0], output.shape[1]))
-            T.set_subtensor(output_demask[mask, :], output)
-            all_outputs_demask.append(output_demask)
+        # Update the mask, if <EOS> was returned by the last iteration
+        mask = T.eq(T.argmax(prev_output, axis=1), 0)
+        all_outputs = [mask] + all_outputs
 
-        # Select results
-        b_dec = all_outputs_demask[-2]
-        y_dec = all_outputs_demask[-1]
+        # Stop when all sequences are masked
+        return (all_outputs, theano.scan_module.until(T.all(mask)))
 
-        # Update mask array
-        eos_mask = T.argmax(y_dec, axis=1) == 0
-        T.set_subtensor(eos_mask[end_mask >= 0], 0)  # Set false for skiped obs
-        T.set_subtensor(end_mask[eos_mask], t)  # Set t for done sequences
+    def _outputs_info_list(self, b_enc):
+        outputs_info = super()._outputs_info_list()
 
-        return (
-            [end_mask, b_dec] + all_outputs_demask,
-            theano.scan_module.until(T.all(mask))
-        )
+        # 1) Replace the initial b_{t_0} with b_enc for the first layer
+        outputs_info = [b_enc] + outputs_info[1:]
+
+        # 2) Replace the initial y_{t_0} with 0, and add taps = -1
+        y = T.zeros((b_enc.shape[0], self._layers[0].output_size))
+        outputs_info = outputs_info[:-1] + [y]
+
+        # 3) Initialize with no mask
+        mask = T.zeros((b_enc.shape[0], ), dtype='int8')
+        outputs_info = [mask] + outputs_info
+
+        return outputs_info
 
     def forward_pass(self, b_enc):
         """
@@ -195,15 +172,9 @@ class Decoder(BaseAbstraction):
         # this is then transposed back to its original format
         outputs, _ = theano.scan(
             fn=self._forward_scanner,
-            sequences=T.arange(0, self._maxlength),
-            outputs_info=[
-                -1 * T.ones(b_enc.shape[0], dtype='int32'),
-                b_enc
-            ] + self._outputs_info_list()
+            n_steps=self._maxlength,
+            outputs_info=self._outputs_info_list(b_enc)
         )
 
-        # Select the important arrays
-        end_mask = (outputs[0])[-1, :]
-        y = outputs[-1].transpose(1, 2, 0)
-
-        return (end_mask, y)
+        y = self._last_output(outputs)
+        return y.transpose(1, 2, 0)
