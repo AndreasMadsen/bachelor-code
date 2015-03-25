@@ -27,8 +27,10 @@ class RNN:
         )
         self.weights.append(W11)
 
-        return lambda b_h0_t, b_h1_tm1: \
-            T.dot(b_h0_t, W01) + T.dot(b_h1_tm1, W11)
+        def forward(b_h0_t, b_h1_tm1):
+            return T.dot(b_h0_t, W01) + T.dot(b_h1_tm1, W11)
+
+        return forward
 
     def setup(self, batch_size, layer_index, prev_layer):
         self.layer_index = layer_index

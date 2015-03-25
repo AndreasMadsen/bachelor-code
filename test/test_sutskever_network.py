@@ -119,7 +119,7 @@ def test_sutskever_decoder():
     ]))
 
 def test_sutskever_network():
-    sutskever = neural.network.Sutskever()
+    sutskever = neural.network.Sutskever(eta=0.4, momentum=0.9, max_output_size=10)
     # Setup theano tap.test_value
     test_value = subset_vocal_sequence(10)
     letters = test_value[0].shape[1]
@@ -137,3 +137,6 @@ def test_sutskever_network():
 
     # Compile train, test and predict functions
     sutskever.compile()
+
+    error = sutskever.train(*subset_vocal_sequence(500))
+    print(error)

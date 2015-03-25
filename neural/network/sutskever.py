@@ -13,15 +13,15 @@ class SutskeverNetwork(OptimizerAbstraction):
     Abstraction for creating recurent neural networks
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, max_output_size=100, **kwargs):
         OptimizerAbstraction.__init__(self, **kwargs)
 
-        self._input = T.tensor3('x', dtype='int32')
+        self._input = T.tensor3('x')
         self._target = T.imatrix('t')
 
         # encoder -> decoder
         self._encoder = Encoder(self._input)
-        self._decoder = Decoder(self._input)
+        self._decoder = Decoder(self._input, maxlength=max_output_size)
 
     def test_value(self, x, t):
         self._input.tag.test_value = x
@@ -48,6 +48,11 @@ class SutskeverNetwork(OptimizerAbstraction):
         y = self._decoder.forward_pass(b_enc)
 
         return y
+
+    def _loss(self, y, t):
+        # TODO: improve this by add <EOS> end padding
+        y = y[:, :, 0:t.shape[1]]
+        return super()._loss(y, t)
 
     def compile(self):
         # The input decoder much match its softmax output

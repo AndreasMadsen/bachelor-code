@@ -10,14 +10,14 @@ class OptimizerAbstraction():
         self._eta = eta
         self._momentum = momentum
 
-        self._loss = None
+        self._loss_layer = None
 
     def set_loss(self, loss):
         """
         Set the loss function.
         """
         loss.setup(self._input.shape[0])
-        self._loss = loss
+        self._loss_layer = loss
 
     def backward_pass(self, L):
         """
@@ -48,6 +48,9 @@ class OptimizerAbstraction():
             in zip(gW, self.weight_list())
         ]))
 
+    def _loss(self, y, t):
+        return self._loss_layer.loss(y, t)
+
     def compile(self):
         """
         Takes the defined layers and compiles train, error and predict functions.
@@ -62,7 +65,7 @@ class OptimizerAbstraction():
         y = self.forward_pass(self._input)
 
         # Setup loss function
-        L = self._loss.loss(y, self._target)
+        L = self._loss(y, self._target)
 
         # Generate backward pass
         gW = self.backward_pass(L)
