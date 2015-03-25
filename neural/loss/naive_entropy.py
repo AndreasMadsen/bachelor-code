@@ -7,8 +7,7 @@ class NaiveEntropy:
     def __init__(self):
         pass
 
-    def setup(self, batch_size, last_layer):
-        self.input_size = last_layer.output_size
+    def setup(self, batch_size):
         self.batch_size = batch_size
 
     def loss(self, y, t):

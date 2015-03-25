@@ -16,7 +16,7 @@ class OptimizerAbstraction():
         """
         Set the loss function.
         """
-        loss.setup(self._input.shape[0], self._layers[-1])
+        loss.setup(self._input.shape[0])
         self._loss = loss
 
     def backward_pass(self, L):
