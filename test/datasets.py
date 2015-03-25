@@ -49,7 +49,7 @@ def subset_vocal_sequence(items, Tmax=7):
 
     def index_to_indicator(matrix, maxIndex):
         shape = matrix.shape
-        tensor = np.zeros((shape[0], maxIndex, shape[1]))
+        tensor = np.zeros((shape[0], maxIndex, shape[1]), dtype='int32')
         (obs, time) = np.mgrid[0:shape[0], 0:shape[1]]
         tensor[obs, matrix, time] = 1
         return tensor

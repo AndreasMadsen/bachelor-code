@@ -1,12 +1,13 @@
 
 import _test
-from datasets import quadrant_cumsum_classify
+from datasets import subset_vocal_sequence
 from nose.tools import *
 
 import numpy as np
-import neural
 import theano
 import theano.tensor as T
+
+import neural
 from neural.network.sutskever import Encoder, Decoder
 
 def test_sutskever_encoder():
@@ -51,7 +52,7 @@ def test_sutskever_encoder():
     b = encoder.forward_pass(x_input)
 
     # Assert output
-    assert_equal(y.tag.test_value.shape, (2, 4))
+    assert_equal(b.tag.test_value.shape, (2, 4))
 
     assert(np.allclose(b.tag.test_value, [
         [0.86412394, 0.27515879, 0.74134195, 0.82611161],
@@ -116,3 +117,23 @@ def test_sutskever_decoder():
         [0.71534252, 0.11405356, 0.17060389],
         [0.69669789, 0.09191318, 0.21138890]
     ]))
+
+def test_sutskever_network():
+    sutskever = neural.network.Sutskever()
+    # Setup theano tap.test_value
+    test_value = subset_vocal_sequence(10)
+    letters = test_value[0].shape[1]
+    sutskever.test_value(*test_value)
+
+    # Setup layers for a logistic classifier model
+    sutskever.set_input(neural.layer.Input(letters))
+    sutskever.push_encoder_layer(neural.layer.RNN(15))
+    sutskever.push_decoder_layer(neural.layer.RNN(15))
+    sutskever.push_decoder_layer(neural.layer.RNN(8))
+    sutskever.push_decoder_layer(neural.layer.Softmax(letters))
+
+    # Setup loss function
+    sutskever.set_loss(neural.loss.NaiveEntropy())
+
+    # Compile train, test and predict functions
+    sutskever.compile()
