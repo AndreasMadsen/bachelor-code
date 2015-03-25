@@ -16,13 +16,26 @@ class SutskeverNetwork(OptimizerAbstraction):
     def __init__(self, **kwargs):
         OptimizerAbstraction.__init__(self, **kwargs)
 
-        self._input = T.tensor3('x')
+        self._input = T.tensor3('x', dtype='int32')
         self._target = T.imatrix('t')
 
         # encoder -> decoder
-        # TODO: change this to take shape as input
         self._encoder = Encoder(self._input)
         self._decoder = Decoder(self._input)
+
+    def test_value(self, x, t):
+        self._input.tag.test_value = x
+        self._target.tag.test_value = t
+
+    def set_input(self, layer):
+        self._encoder.set_input(layer)
+        self._decoder.set_input(layer)
+
+    def push_encoder_layer(self, layer):
+        self._encoder.push_layer(layer)
+
+    def push_decoder_layer(self, layer):
+        self._decoder.push_layer(layer)
 
     def weight_list(self):
         """
@@ -30,15 +43,19 @@ class SutskeverNetwork(OptimizerAbstraction):
         """
         return self._encoder.weight_list() + self._decoder.weight_list()
 
-    def test_value(self, x, t):
-        self._input.tag.test_value = x
-        self._target.tag.test_value = t
-
     def forward_pass(self, x):
         b_enc = self._encoder.forward_pass(x)
         y = self._decoder.forward_pass(b_enc)
 
         return y
+
+    def compile(self):
+        # The input decoder much match its softmax output
+        assert(self._decoder._layers[+0].output_size == self._decoder._layers[-1].output_size)
+        # The hidden encoder output much match the hidden decoder intialization
+        assert(self._encoder._layers[-1].output_size == self._decoder._layers[+1].output_size)
+
+        super().compile()
 
 class Encoder(BaseAbstraction):
     """
