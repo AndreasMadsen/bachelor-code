@@ -51,8 +51,21 @@ class SutskeverNetwork(OptimizerAbstraction):
 
     def _loss(self, y, t):
         # TODO: improve this by add <EOS> end padding
-        y = y[:, :, 0:t.shape[1]]
-        return super()._loss(y, t)
+        t_max = T.max([y.shape[2], t.shape[1]])
+
+        # Pad y vector with an even distribution
+        y_pad = T.ones((y.shape[0], y.shape[1], t_max), dtype='float32') * (1 / y.shape[1])
+        y_pad = T.set_subtensor(
+            y_pad[:, :, 0:y.shape[2]], y
+        )
+
+        # Pad t vector with <EOS>
+        t_pad = T.zeros((t.shape[0], t_max), dtype='int32')
+        t_pad = T.set_subtensor(
+            t_pad[:, 0:t.shape[1]], t
+        )
+
+        return super()._loss(y_pad, t_pad)
 
     def compile(self):
         # The input decoder much match its softmax output
