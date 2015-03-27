@@ -123,24 +123,24 @@ def test_sutskever_decoder():
         [0.71534252, 0.11405356, 0.17060389],
         [0.69669789, 0.09191318, 0.21138890]
     ]))
-test_sutskever_decoder()
 
 def test_sutskever_network():
     # TODO: debug errors caused by test_value
     theano.config.compute_test_value = 'off'
 
-    sutskever = neural.network.Sutskever(eta=0.4, momentum=0.9, max_output_size=10)
+    sutskever = neural.network.Sutskever(eta=0.1, momentum=0.9, max_output_size=10)
     # Setup theano tap.test_value
     test_value = subset_vocal_sequence(10)
     sutskever.test_value(*test_value)
 
     # Setup layers for a logistic classifier model
     letters = test_value[0].shape[1]
-    latent = 15
+    latent = 40
     sutskever.set_input(neural.layer.Input(letters))
+    sutskever.push_encoder_layer(neural.layer.LSTM(20))
     sutskever.push_encoder_layer(neural.layer.LSTM(latent))
     sutskever.push_decoder_layer(neural.layer.LSTM(latent))
-    sutskever.push_decoder_layer(neural.layer.LSTM(8))
+    sutskever.push_decoder_layer(neural.layer.LSTM(20))
     sutskever.push_decoder_layer(neural.layer.Softmax(letters))
 
     # Setup loss function
@@ -152,7 +152,7 @@ def test_sutskever_network():
     test.classifier(
         sutskever, subset_vocal_sequence,
         y_shape=(100, 4, 5), performance=0.6, asserts=False, plot=True,
-        epochs=100
+        epochs=150
     )
 
     def mat2str(mat):
