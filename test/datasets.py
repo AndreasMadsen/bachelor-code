@@ -27,10 +27,8 @@ def subset_vocal_sequence(items, Tmax=7):
     All letters are used for the input sequence, the taget sequence is
     then the subset of the input where only vocals appear.
     """
-    # max_letter = 26
-    # vocals = [1, 5, 9, 15, 21, 25]
-    max_letter = 10
-    vocals = [1, 2, 3, 4, 10]
+    max_letter = 10  # 26 for full alphabet
+    vocals = [1, 5, 9, 15, 21, 25]
 
     # The input sequence length is random between 2 and Tmax
     sequence_length = np.random.randint(2, Tmax, size=items)

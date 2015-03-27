@@ -1,38 +1,9 @@
 
-import _test
+import test
 from datasets import quadrant_classify, quadrant_cumsum_classify
 from nose.tools import *
 
-import matplotlib.pyplot as plt
-import numpy as np
 import neural
-
-def _classifier_tester(model, generator, epochs=100, plot=False):
-    # Setup dataset and train model
-    test_dataset = generator(100)
-
-    train_error = np.zeros(epochs)
-    test_error = np.zeros(epochs)
-    for i in range(0, epochs):
-        train_error[i] = model.train(*generator(500))
-        test_error[i] = model.test(*test_dataset)
-
-    if (plot):
-        plt.plot(np.arange(0, epochs), train_error, label='train', alpha=0.5)
-        plt.plot(np.arange(0, epochs), test_error, label='test', alpha=0.5)
-        plt.legend()
-        plt.ylabel('loss')
-        plt.show()
-
-    # Loss function should be improved
-    assert(train_error[0] > train_error[-1] > 0)
-    assert(test_error[0] > test_error[-1] > 0)
-
-    # Test prediction shape and error rate
-    y = model.predict(test_dataset[0])
-    assert_equal(y.shape, (100, 4, 5))
-    # 0.25 is random guess
-    assert(np.mean(np.argmax(y, axis=1) == test_dataset[1]) > 0.60)
 
 def test_logistic_classifier():
     logistic = neural.network.Std(eta=0.4, momentum=0.9)
@@ -49,7 +20,10 @@ def test_logistic_classifier():
     # Compile train, test and predict functions
     logistic.compile()
 
-    _classifier_tester(logistic, quadrant_classify)
+    test.classifier(
+        logistic, quadrant_classify,
+        y_shape=(100, 4, 5), performance=0.6
+    )
 
 def test_rnn_classifier():
     rnn = neural.network.Std(eta=0.6, momentum=0.9)
@@ -67,7 +41,11 @@ def test_rnn_classifier():
     # Compile train, test and predict functions
     rnn.compile()
 
-    _classifier_tester(rnn, quadrant_cumsum_classify, epochs=800)
+    test.classifier(
+        rnn, quadrant_cumsum_classify,
+        y_shape=(100, 4, 5), performance=0.6,
+        epochs=800
+    )
 
 def test_lstm_classifier():
     lstm = neural.network.Std(eta=0.6, momentum=0.9)
@@ -85,4 +63,8 @@ def test_lstm_classifier():
     # Compile train, test and predict functions
     lstm.compile()
 
-    _classifier_tester(lstm, quadrant_cumsum_classify, epochs=800)
+    test.classifier(
+        lstm, quadrant_cumsum_classify,
+        y_shape=(100, 4, 5), performance=0.6,
+        epochs=800
+    )

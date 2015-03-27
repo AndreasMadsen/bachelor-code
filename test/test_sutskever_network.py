@@ -1,5 +1,5 @@
 
-import _test
+import test
 from datasets import subset_vocal_sequence
 from nose.tools import *
 
@@ -51,6 +51,9 @@ def test_sutskever_encoder():
     # Perform forward pass
     b = encoder.forward_pass(x_input)
 
+    # Check that the gradient can be calculated
+    T.grad(T.sum(b), weights)
+
     # Assert output
     assert_equal(b.tag.test_value.shape, (2, 4))
 
@@ -101,6 +104,9 @@ def test_sutskever_decoder():
     # Perform forward pass
     y = decoder.forward_pass(b_input)
 
+    # Check that the gradient can be calculated
+    # T.grad(T.sum(y), weights)  # TODO: debug errors caused by test_value
+
     # Assert output
     assert_equal(y.tag.test_value.shape, (2, 3, 2))
 
@@ -117,19 +123,24 @@ def test_sutskever_decoder():
         [0.71534252, 0.11405356, 0.17060389],
         [0.69669789, 0.09191318, 0.21138890]
     ]))
+test_sutskever_decoder()
 
 def test_sutskever_network():
+    # TODO: debug errors caused by test_value
+    theano.config.compute_test_value = 'off'
+
     sutskever = neural.network.Sutskever(eta=0.4, momentum=0.9, max_output_size=10)
     # Setup theano tap.test_value
     test_value = subset_vocal_sequence(10)
-    letters = test_value[0].shape[1]
     sutskever.test_value(*test_value)
 
     # Setup layers for a logistic classifier model
+    letters = test_value[0].shape[1]
+    latent = 15
     sutskever.set_input(neural.layer.Input(letters))
-    sutskever.push_encoder_layer(neural.layer.RNN(15))
-    sutskever.push_decoder_layer(neural.layer.RNN(15))
-    sutskever.push_decoder_layer(neural.layer.RNN(8))
+    sutskever.push_encoder_layer(neural.layer.LSTM(latent))
+    sutskever.push_decoder_layer(neural.layer.LSTM(latent))
+    sutskever.push_decoder_layer(neural.layer.LSTM(8))
     sutskever.push_decoder_layer(neural.layer.Softmax(letters))
 
     # Setup loss function
@@ -138,5 +149,28 @@ def test_sutskever_network():
     # Compile train, test and predict functions
     sutskever.compile()
 
-    error = sutskever.train(*subset_vocal_sequence(500))
-    print(error)
+    test.classifier(
+        sutskever, subset_vocal_sequence,
+        y_shape=(100, 4, 5), performance=0.6, asserts=False, plot=True,
+        epochs=100
+    )
+
+    def mat2str(mat):
+        strs = []
+        for row in mat:
+            strs.append(
+                ''.join([chr(m + ord('A') - 1) for m in row if m != 0])
+            )
+        return strs
+
+    (x, t) = subset_vocal_sequence(10)
+    y = sutskever.predict(x)
+
+    print(y)
+
+    print(mat2str(np.argmax(x, axis=1)))
+    print(mat2str(np.argmax(y, axis=1)))
+    print(mat2str(t))
+
+    theano.config.compute_test_value = 'warn'
+test_sutskever_network()
