@@ -20,7 +20,7 @@ def quadrant_cumsum_classify(items, T=5):
     t += np.all([Xsum[:, 0, :] >= 0, Xsum[:, 1, :] < 0] , axis=0) * 3
     return (X, t)
 
-def subset_vocal_sequence(items, Tmax=7):
+def subset_vocal_sequence(items, Tmin=5, Tmax=7):
     """
     This will generate a random input and target sequence of letters.
 
@@ -31,7 +31,7 @@ def subset_vocal_sequence(items, Tmax=7):
     vocals = [1, 5, 9, 15, 21, 25]
 
     # The input sequence length is random between 2 and Tmax
-    sequence_length = np.random.randint(2, Tmax, size=items)
+    sequence_length = np.random.randint(Tmin, Tmax, size=items)
 
     # Generate a random sequence of letters
     letters = np.random.randint(1, max_letter + 1, size=(items, Tmax)).astype('int32')
