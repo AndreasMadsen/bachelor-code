@@ -48,6 +48,7 @@ def classifier(model, generator, y_shape, performance, epochs=100, asserts=True,
     # Test prediction shape and error rate
     y = model.predict(test_dataset[0])
     if (asserts): assert_equal(y.shape, y_shape)
+    # TODO: likely wrong in CTC problem. Misses was 0.0
     misses = np.mean(np.argmax(y, axis=1) == test_dataset[1])
     if (asserts): assert(misses > performance)
     print(misses)
