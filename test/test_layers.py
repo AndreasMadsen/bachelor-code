@@ -86,24 +86,24 @@ def test_lstm():
     lstm = neural.layer.LSTM(4)
     lstm.setup(2, 1, neural.layer.Input(3))
 
-    assert_equal(len(lstm.weights), 2 * 4)
+    assert_equal(len(lstm.weights), 2)
+    assert_equal(lstm.weights[0].get_value().shape, (3, 4 * 4))
+    assert_equal(lstm.weights[1].get_value().shape, (4, 4 * 4))
 
-    for i in range(0, 4):
-        assert_equal(lstm.weights[i * 2 + 0].get_value().shape, (3, 4))
-        assert_equal(lstm.weights[i * 2 + 1].get_value().shape, (4, 4))
+    W01 = np.asarray([
+        [1, 1, 1, 1],
+        [2, 2, 0, 0],
+        [1, 1, 0, 1],
+    ], dtype='float32')
+    lstm.weights[0].set_value(np.tile(W01, (1, 4)))
 
-        lstm.weights[i * 2 + 0].set_value(np.asarray([
-            [1, 1, 1, 1],
-            [2, 2, 0, 0],
-            [1, 1, 0, 1],
-        ], dtype='float32'))
-
-        lstm.weights[i * 2 + 1].set_value(np.asarray([
-            [1, 1, 1, 1],
-            [2, 2, 0, 0],
-            [2, 2, 2, 1],
-            [1, 1, 1, 0],
-        ], dtype='float32'))
+    W11 = np.asarray([
+        [1, 1, 1, 1],
+        [2, 2, 0, 0],
+        [2, 2, 2, 1],
+        [1, 1, 1, 0],
+    ], dtype='float32')
+    lstm.weights[1].set_value(np.tile(W11, (1, 4)))
 
     (s1, b1) = lstm.scanner([
         [1, 1, 1],
@@ -152,3 +152,4 @@ def test_lstm():
         [0.71097024, 0.71097024, 0.46094678, 0.60314779],
         [0.88072007, 0.88072007, 0.84381131, 0.87125741]
     ]))
+test_lstm()
