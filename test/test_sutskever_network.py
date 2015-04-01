@@ -102,7 +102,7 @@ def test_sutskever_decoder():
     ], dtype='float32'))
 
     # Perform forward pass
-    y = decoder.forward_pass(b_input)
+    (eois, y) = decoder.forward_pass(b_input)
 
     # Check that the gradient can be calculated
     # T.grad(T.sum(y), weights)  # TODO: debug errors caused by test_value
@@ -113,16 +113,20 @@ def test_sutskever_decoder():
     # The first sequences ends after 1 iteration
     y0 = y[:, :, 0]
     assert(np.allclose(y0.tag.test_value, [
-        [0.71534252, 0.11405356, 0.17060389],
-        [0.34762833, 0.23523150, 0.41714019]
+        [0.94210082, 0.03017074, 0.02772840],
+        [0.34329799, 0.23112552, 0.42557654]
     ]))
+    assert_equal(eois[0].tag.test_value, 0)
 
     # The second sequence ends after 2 iterations
     y1 = y[:, :, 1]
     assert(np.allclose(y1.tag.test_value, [
-        [0.71534252, 0.11405356, 0.17060389],
-        [0.69669789, 0.09191318, 0.21138890]
+        [0.94210082, 0.03017074, 0.02772840],
+        [0.39750695, 0.21293519, 0.38955790]
     ]))
+    assert_equal(eois[1].tag.test_value, 1)
+
+test_sutskever_decoder()
 
 def test_sutskever_network():
     # TODO: debug errors caused by test_value
@@ -173,4 +177,3 @@ def test_sutskever_network():
     print(mat2str(t))
 
     theano.config.compute_test_value = 'warn'
-test_sutskever_network()

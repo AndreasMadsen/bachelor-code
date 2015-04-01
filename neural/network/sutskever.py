@@ -45,7 +45,7 @@ class SutskeverNetwork(OptimizerAbstraction):
 
     def forward_pass(self, x):
         b_enc = self._encoder.forward_pass(x)
-        y = self._decoder.forward_pass(b_enc)
+        (eois, y) = self._decoder.forward_pass(b_enc)
 
         return y
 
@@ -149,7 +149,7 @@ class Decoder(BaseAbstraction):
         self._input = b_input
         self._maxlength = maxlength
 
-    def _forward_scanner(self, mask, *args):
+    def _forward_scanner(self, t, eosi, mask, *args):
         """
         Defines the forward equations for each time step.
         """
@@ -175,11 +175,14 @@ class Decoder(BaseAbstraction):
             prev_output = layer_outputs[-1]
 
         # Update the mask, if <EOS> was returned by the last iteration
-        mask = T.eq(T.argmax(prev_output, axis=1), 0)
-        all_outputs = [mask] + all_outputs
+        new_mask = T.eq(T.argmax(prev_output, axis=1), 0)
+        # Update eosi where new observations have ended `new_mask - mask`
+        eosi = T.set_subtensor(eosi[T.nonzero(new_mask - mask)[0]], t)
+
+        all_outputs = [eosi, new_mask] + all_outputs
 
         # Stop when all sequences are masked
-        return (all_outputs, theano.scan_module.until(T.all(mask)))
+        return (all_outputs, theano.scan_module.until(T.all(new_mask)))
 
     def _outputs_info_list(self, b_enc):
         outputs_info = super()._outputs_info_list()
@@ -192,8 +195,12 @@ class Decoder(BaseAbstraction):
         outputs_info = outputs_info[:-1] + [y]
 
         # 3) Initialize with no mask
-        mask = T.zeros((b_enc.shape[0], ), dtype='int8')
+        mask = T.ones((b_enc.shape[0], ), dtype='int8')
         outputs_info = [mask] + outputs_info
+
+        # 4) Initialize the <EOS> index counter
+        eosi = (self._maxlength - 1) * T.ones((b_enc.shape[0], ), dtype='int32')
+        outputs_info = [eosi] + outputs_info
 
         return outputs_info
 
@@ -207,9 +214,10 @@ class Decoder(BaseAbstraction):
         # this is then transposed back to its original format
         outputs, _ = theano.scan(
             fn=self._forward_scanner,
-            n_steps=self._maxlength,
+            sequences=[T.arange(0, self._maxlength)],
             outputs_info=self._outputs_info_list(b_enc)
         )
 
+        eois = outputs[0][-1, :]
         y = self._last_output(outputs)
-        return y.transpose(1, 2, 0)
+        return (eois, y.transpose(1, 2, 0))
