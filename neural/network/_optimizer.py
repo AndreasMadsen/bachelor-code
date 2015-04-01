@@ -62,10 +62,12 @@ class OptimizerAbstraction():
         #
 
         # Create forward pass equations
-        y = self.forward_pass(self._input)
+        forward = self.forward_pass(self._input)
+        y = forward
+        if (isinstance(forward, list) or isinstance(forward, tuple)): y = forward[-1]
 
         # Setup loss function
-        L = self._loss(y, self._target)
+        L = self._loss(*forward, t=self._target)
 
         # Generate backward pass
         gW = self.backward_pass(L)

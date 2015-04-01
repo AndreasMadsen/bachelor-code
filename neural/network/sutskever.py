@@ -47,22 +47,45 @@ class SutskeverNetwork(OptimizerAbstraction):
         b_enc = self._encoder.forward_pass(x)
         (eois, y) = self._decoder.forward_pass(b_enc)
 
-        return y
+        return (eois, y)
 
-    def _loss(self, y, t):
-        # TODO: improve this by add <EOS> end padding
-        t_max = T.max([y.shape[2], t.shape[1]])
+    def _loss_scanner(self, y_i, eois_i, t_i, dims, time):
+        # Get length of y seqence including the first <EOS>
+        yend = eois_i + 1
 
-        # Pad y vector with an even distribution
-        y_pad = T.ones((y.shape[0], y.shape[1], t_max), dtype='float32') * (1 / y.shape[1])
-        y_pad = T.set_subtensor(
-            y_pad[:, :, 0:y.shape[2]], y
-        )
+        # Get length of t seqence including the first <EOS>
+        tend = T.nonzero(T.eq(t_i, 0))[0][0] + 1
 
-        # Pad t vector with <EOS>
-        t_pad = T.zeros((t.shape[0], t_max), dtype='int32')
-        t_pad = T.set_subtensor(
-            t_pad[:, 0:t.shape[1]], t
+        # Create a new y sequence with T elements
+        # TODO: this can be optimized, being clever with subtensor and ones
+        y2_i = T.zeros((dims, time), dtype='float32')
+        # Keep the actual y elements
+        y2_i = T.set_subtensor(y2_i[:, :yend], y_i[:, :yend])
+        # Fill in missing y2 elements with an even distribution.
+        #   If yend >= tend, then this won't do anything
+        y2_i = T.set_subtensor(y2_i[:, yend:tend], 1.0 / dims)
+        # Add ignore padding to y2 for the remaining elments
+        y2_i = T.set_subtensor(y2_i[:, T.max([yend, tend]):], 1.0)
+
+        # Createa a new t seqnece with T elements
+        t2_i = T.zeros((time,), dtype='int32')
+        # TODO: this can be optimized, being clever with subtensor
+        # Keep the actual t elements
+        t2_i = T.set_subtensor(t2_i[:tend], t_i[:tend])
+        # Add <EOS> padding to t2 for the remaining elments, the y2 padding will ignore this
+        t2_i = T.set_subtensor(t2_i[tend:], 0)
+
+        return [y2_i, t2_i]
+
+    def _loss(self, eois, y, t):
+        (y_pad, t_pad), _ = theano.scan(
+            fn=self._loss_scanner,
+            sequences=[y, eois, t],
+            outputs_info=[None, None],
+            non_sequences=[
+                y.shape[1],
+                T.max([y.shape[2], t.shape[1]])
+            ]
         )
 
         return super()._loss(y_pad, t_pad)
