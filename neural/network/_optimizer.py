@@ -12,6 +12,9 @@ class OptimizerAbstraction():
 
         self._loss_layer = None
 
+    def debugprint_list(self):
+        return []
+
     def set_loss(self, loss):
         """
         Set the loss function.
@@ -75,16 +78,25 @@ class OptimizerAbstraction():
         #
         # Setup functions
         #
-        self.train = theano.function(
+        self._train = theano.function(
             inputs=[self._input, self._target],
-            outputs=L,
+            outputs=[L] + self.debugprint_list(),
             updates=self._update_functions(gW)
         )
-        self.test = theano.function(
+        self._test = theano.function(
             inputs=[self._input, self._target],
-            outputs=L
+            outputs=[L] + self.debugprint_list()
         )
-        self.predict = theano.function(
+        self._predict = theano.function(
             inputs=[self._input],
-            outputs=y
+            outputs=[y] + self.debugprint_list()
         )
+
+    def train(self, *args):
+        return list(self._train(*args))[0]
+
+    def test(self, *args):
+        return list(self._test(*args))[0]
+
+    def predict(self, *args):
+        return list(self._predict(*args))[0]
