@@ -64,23 +64,23 @@ class SutskeverNetwork(OptimizerAbstraction, DebugAbstraction):
         tend = T.nonzero(T.eq(t_i, 0))[0][0] + 1
 
         # Create a new y sequence with T elements
-        # TODO: this can be optimized, being clever with subtensor and ones
-        y2_i = T.zeros((dims, time), dtype='float32')
-        # Keep the actual y elements
-        y2_i = T.set_subtensor(y2_i[:, :yend], y_i[:, :yend])
-        # Fill in missing y2 elements with an even distribution.
-        #   If yend >= tend, then this won't do anything
-        y2_i = T.set_subtensor(y2_i[:, yend:tend], 1.0 / dims)
-        # Add ignore padding to y2 for the remaining elments
-        y2_i = T.set_subtensor(y2_i[:, T.max([yend, tend]):], 1.0)
+        fill_size = T.max([0, tend - yend])
+        y2_i = T.concatenate([
+            # Keep the actual y elements
+            y_i[:, :yend],
+            # Fill in missing y2 elements with an even distribution.
+            T.ones((y_i.shape[0], fill_size)) / dims,
+            # Add ignore padding to y2 for the remaining elments
+            T.ones((y_i.shape[0], time - fill_size - yend))
+        ], axis=1)
 
         # Createa a new t seqnece with T elements
-        t2_i = T.zeros((time,), dtype='int32')
-        # TODO: this can be optimized, being clever with subtensor
-        # Keep the actual t elements
-        t2_i = T.set_subtensor(t2_i[:tend], t_i[:tend])
-        # Add <EOS> padding to t2 for the remaining elments, the y2 padding will ignore this
-        t2_i = T.set_subtensor(t2_i[tend:], 0)
+        t2_i = T.concatenate([
+            # Keep the actual t elements
+            t_i[:tend],
+            # Add <EOS> padding to t2 for the remaining elments, the y2 padding will ignore this
+            T.zeros((time - tend,), dtype='int32')
+        ], axis=0)
 
         return [y2_i, t2_i]
 
