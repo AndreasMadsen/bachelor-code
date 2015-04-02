@@ -6,9 +6,11 @@ import theano
 import theano.tensor as T
 
 from neural.network._base import BaseAbstraction
+from neural.network._debug import DebugAbstraction
 from neural.network._optimizer import OptimizerAbstraction
 
-class SutskeverNetwork(OptimizerAbstraction):
+
+class SutskeverNetwork(OptimizerAbstraction, DebugAbstraction):
     """
     Abstraction for creating recurent neural networks
     """
@@ -22,6 +24,11 @@ class SutskeverNetwork(OptimizerAbstraction):
         # encoder -> decoder
         self._encoder = Encoder(self._input)
         self._decoder = Decoder(self._input, maxlength=max_output_size)
+
+    def debugprint_list(self):
+        return (super().debugprint_list() +
+                self._encoder.debugprint_list() +
+                self._decoder.debugprint_list())
 
     def test_value(self, x, t):
         self._input.tag.test_value = x
@@ -49,9 +56,9 @@ class SutskeverNetwork(OptimizerAbstraction):
 
         return (eois, y)
 
-    def _loss_scanner(self, y_i, eois_i, t_i, dims, time):
+    def _loss_scanner(self, y_i, eosi_i, t_i, dims, time):
         # Get length of y seqence including the first <EOS>
-        yend = eois_i + 1
+        yend = eosi_i + 1
 
         # Get length of t seqence including the first <EOS>
         tend = T.nonzero(T.eq(t_i, 0))[0][0] + 1
@@ -77,10 +84,10 @@ class SutskeverNetwork(OptimizerAbstraction):
 
         return [y2_i, t2_i]
 
-    def _loss(self, eois, y, t):
+    def _loss(self, eosi, y, t):
         (y_pad, t_pad), _ = theano.scan(
             fn=self._loss_scanner,
-            sequences=[y, eois, t],
+            sequences=[y, eosi, t],
             outputs_info=[None, None],
             non_sequences=[
                 y.shape[1],
@@ -98,7 +105,7 @@ class SutskeverNetwork(OptimizerAbstraction):
 
         super().compile()
 
-class Encoder(BaseAbstraction):
+class Encoder(BaseAbstraction, DebugAbstraction):
     """
     The encoder is like a normal forward scanner but doesn't have an output
     layer applied to it. It also only outputs the last time iteration. This
@@ -108,7 +115,8 @@ class Encoder(BaseAbstraction):
     relative to the other sequences in the minibatch.
     """
     def __init__(self, x_input, **kwargs):
-        super().__init__(**kwargs)
+        BaseAbstraction.__init__(self, **kwargs)
+        DebugAbstraction.__init__(self, **kwargs)
         self._input = x_input
 
     def _forward_scanner(self, x_t, *args):
@@ -160,7 +168,7 @@ class Encoder(BaseAbstraction):
         # last time iteration. Return value shape is: row (observations), col (dims)
         return b_enc[-1, :, :]
 
-class Decoder(BaseAbstraction):
+class Decoder(BaseAbstraction, DebugAbstraction):
     """
     The decoder takes the encoder output for the last time iteration and
     passes it intro a forward iteration. The next output iteration is then
@@ -168,7 +176,8 @@ class Decoder(BaseAbstraction):
     tag signals when to stop.
     """
     def __init__(self, b_input, maxlength=100, **kwargs):
-        super().__init__(**kwargs)
+        BaseAbstraction.__init__(self, **kwargs)
+        DebugAbstraction.__init__(self, **kwargs)
         self._input = b_input
         self._maxlength = maxlength
 
@@ -183,14 +192,14 @@ class Decoder(BaseAbstraction):
         all_outputs = []
         curr = 0
         prev_output = y
-        mask = mask.dimshuffle((0, 'x'))
+        mask_col = mask.dimshuffle((0, 'x'))
 
         # Loop though each layer and apply send the previous layers output
         # to the next layer. The layer can have additional paramers, if
         # taps where provided using the `outputs_info` property.
         for layer in self._layers[1:]:
             taps = self._infer_taps(layer)
-            layer_outputs = layer.scanner(prev_output, *args[curr:curr + taps], mask=mask)
+            layer_outputs = layer.scanner(prev_output, *args[curr:curr + taps], mask=mask_col)
 
             curr += taps
             all_outputs += layer_outputs
@@ -218,7 +227,7 @@ class Decoder(BaseAbstraction):
         outputs_info = outputs_info[:-1] + [y]
 
         # 3) Initialize with no mask
-        mask = T.ones((b_enc.shape[0], ), dtype='int8')
+        mask = T.zeros((b_enc.shape[0], ), dtype='int8')
         outputs_info = [mask] + outputs_info
 
         # 4) Initialize the <EOS> index counter
@@ -241,6 +250,6 @@ class Decoder(BaseAbstraction):
             outputs_info=self._outputs_info_list(b_enc)
         )
 
-        eois = outputs[0][-1, :]
+        eosi = outputs[0][-1,:]
         y = self._last_output(outputs)
-        return (eois, y.transpose(1, 2, 0))
+        return (eosi, y.transpose(1, 2, 0))
