@@ -31,7 +31,9 @@ def subset_vocal_sequence(items, Tmin=5, Tmax=7):
     vocals = [1, 5, 9, 15, 21, 25]
 
     # The input sequence length is random between 2 and Tmax
-    sequence_length = np.random.randint(Tmin, Tmax, size=items)
+    sequence_length = np.ones(items) * Tmin
+    if (Tmin < Tmax):
+        sequence_length = np.random.randint(Tmin, Tmax, size=items)
 
     # Generate a random sequence of letters
     letters = np.random.randint(1, max_letter + 1, size=(items, Tmax)).astype('int32')

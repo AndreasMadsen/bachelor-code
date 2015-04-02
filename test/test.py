@@ -2,6 +2,7 @@
 import warnings
 import os.path as path
 import sys
+import os
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -19,11 +20,13 @@ warnings.filterwarnings(
 thisdir = path.dirname(path.realpath(__file__))
 sys.path.append(path.join(thisdir, '..'))
 
-theano.config.optimizer = 'None'
-theano.config.linker = 'py'
-theano.config.exception_verbosity = 'high'
-theano.config.compute_test_value = 'warn'
+is_HPC = (os.environ.get('DTU_HPC') is not None)
 
+if (not is_HPC):
+    theano.config.optimizer = 'None'
+    theano.config.linker = 'py'
+    theano.config.exception_verbosity = 'high'
+    theano.config.compute_test_value = 'warn'
 
 def classifier(model, generator, y_shape, performance, epochs=100, asserts=True, plot=False):
     # Setup dataset and train model
@@ -36,11 +39,14 @@ def classifier(model, generator, y_shape, performance, epochs=100, asserts=True,
         test_error[i] = model.test(*test_dataset)
 
     if (plot):
+        plt.figure()
         plt.plot(np.arange(0, epochs), train_error, label='train', alpha=0.5)
         plt.plot(np.arange(0, epochs), test_error, label='test', alpha=0.5)
         plt.legend()
         plt.ylabel('loss')
-        plt.show()
+
+        if (is_HPC): plt.savefig('loss.png')
+        else: plt.show()
 
     # Loss function should be improved
     if (asserts): assert(train_error[0] > train_error[-1] > 0)
