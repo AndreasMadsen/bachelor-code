@@ -159,8 +159,18 @@ def scanner(y_i, yt_i, t_i, dims, time):
     ]
 )
 
-theano.printing.pydotprint(y2, format='svg')
-T.grad(T.mean(y2), [y])
+t3 = t2.ravel()
+y3 = y2.transpose(0, 2, 1).reshape((y2.shape[2] * y2.shape[0], y2.shape[1]))
+L = T.mean(T.nnet.categorical_crossentropy(y3, t3))
+
+T.grad(L, [y])
+
+train = theano.function(
+    inputs=[y, yt, t],
+    outputs=L
+)
+
+print(train(y.tag.test_value, yt.tag.test_value, t.tag.test_value))
 
 print(y2.tag.test_value[0, :, :])
 print(t2.tag.test_value[0, :])
