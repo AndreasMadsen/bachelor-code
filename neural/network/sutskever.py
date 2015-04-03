@@ -95,7 +95,7 @@ class SutskeverNetwork(OptimizerAbstraction, DebugAbstraction):
             ]
         )
 
-        return super()._loss(y_pad, t_pad)
+        return (y_pad, t_pad)
 
     def compile(self):
         # The input decoder much match its softmax output

@@ -52,7 +52,7 @@ class OptimizerAbstraction():
         ]))
 
     def _loss(self, y, t):
-        return self._loss_layer.loss(y, t)
+        return (y, t)
 
     def compile(self):
         """
@@ -71,7 +71,9 @@ class OptimizerAbstraction():
         y = forward[-1]
 
         # Setup loss function
-        L = self._loss(*forward, t=self._target)
+        L = self._loss_layer.loss(
+            *self._loss(*forward, t=self._target)
+        )
 
         # Generate backward pass
         gW = self.backward_pass(L)
