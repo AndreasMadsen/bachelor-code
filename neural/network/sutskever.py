@@ -250,6 +250,6 @@ class Decoder(BaseAbstraction, DebugAbstraction):
             outputs_info=self._outputs_info_list(b_enc)
         )
 
-        eosi = outputs[0][-1,:]
+        eosi = outputs[0][-1, :]
         y = self._last_output(outputs)
         return (eosi, y.transpose(1, 2, 0))

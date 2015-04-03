@@ -1,4 +1,6 @@
 
+from nose.tools import *
+
 import warnings
 import os.path as path
 import sys
@@ -21,12 +23,14 @@ thisdir = path.dirname(path.realpath(__file__))
 sys.path.append(path.join(thisdir, '..'))
 
 is_HPC = (os.environ.get('DTU_HPC') is not None)
+is_optimize = (os.environ.get('OPTIMIZE') is not None)
 
 if (not is_HPC):
+    theano.config.compute_test_value = 'warn'
+if (not is_optimize and not is_HPC):
     theano.config.optimizer = 'None'
     theano.config.linker = 'py'
     theano.config.exception_verbosity = 'high'
-    theano.config.compute_test_value = 'warn'
 
 def classifier(model, generator, y_shape, performance, epochs=100, asserts=True, plot=False):
     # Setup dataset and train model
@@ -58,6 +62,6 @@ def classifier(model, generator, y_shape, performance, epochs=100, asserts=True,
     # TODO: likely wrong in CTC problem. Misses was 0.0
     misses = np.mean(np.argmax(y, axis=1) == test_dataset[1])
     if (asserts): assert(misses > performance)
-    print(misses)
+    if (plot): print(misses)
 
 __all__ = ['classifier']

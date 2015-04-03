@@ -66,8 +66,9 @@ class OptimizerAbstraction():
 
         # Create forward pass equations
         forward = self.forward_pass(self._input)
-        y = forward
-        if (isinstance(forward, list) or isinstance(forward, tuple)): y = forward[-1]
+        if (not isinstance(forward, tuple) and not isinstance(forward, list)):
+            forward = [forward]
+        y = forward[-1]
 
         # Setup loss function
         L = self._loss(*forward, t=self._target)
