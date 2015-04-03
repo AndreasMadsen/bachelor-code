@@ -185,6 +185,7 @@ class Decoder(BaseAbstraction, DebugAbstraction):
         """
         Defines the forward equations for each time step.
         """
+        print(*args)
         args = list(args)
         y = args.pop()
 
@@ -199,6 +200,7 @@ class Decoder(BaseAbstraction, DebugAbstraction):
         # taps where provided using the `outputs_info` property.
         for layer in self._layers[1:]:
             taps = self._infer_taps(layer)
+            print(*args[curr:curr + taps])
             layer_outputs = layer.scanner(prev_output, *args[curr:curr + taps], mask=mask_col)
 
             curr += taps
@@ -219,6 +221,8 @@ class Decoder(BaseAbstraction, DebugAbstraction):
     def _outputs_info_list(self, b_enc):
         outputs_info = super()._outputs_info_list()
 
+        print(*outputs_info)
+
         # 1) Replace the initial b_{t_0} with b_enc for the first layer
         outputs_info = [b_enc] + outputs_info[1:]
 
@@ -233,6 +237,8 @@ class Decoder(BaseAbstraction, DebugAbstraction):
         # 4) Initialize the <EOS> index counter
         eosi = (self._maxlength - 1) * T.ones((b_enc.shape[0], ), dtype='int32')
         outputs_info = [eosi] + outputs_info
+
+        print(*outputs_info)
 
         return outputs_info
 

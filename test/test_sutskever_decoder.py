@@ -1,5 +1,6 @@
 
 import test
+from datasets import quadrant_cumsum_decoder_sequence
 from nose.tools import *
 
 import numpy as np
@@ -7,9 +8,10 @@ import theano
 import theano.tensor as T
 
 import neural
-from neural.network.sutskever import Encoder, Decoder
+from neural.network._optimizer import OptimizerAbstraction
+from neural.network.sutskever import Decoder, SutskeverNetwork
 
-def test_sutskever_decoder():
+def test_sutskever_decoder_fast():
     # obs: 2, dims: 4, time: NA
     b_enc = np.asarray([
         [1, 0, 1, 1],
@@ -52,7 +54,8 @@ def test_sutskever_decoder():
     (eois, y) = decoder.forward_pass(b_input)
 
     # Check that the gradient can be calculated
-    # T.grad(T.sum(y), weights)  # TODO: debug errors caused by test_value
+    # TODO: debug errors caused by test_value
+    # T.grad(T.sum(y), weights)
 
     # Assert output
     assert_equal(y.tag.test_value.shape, (2, 3, 2))
@@ -72,3 +75,46 @@ def test_sutskever_decoder():
         [0.69669789, 0.09191318, 0.21138890]
     ]))
     assert_equal(eois[1].tag.test_value, 1)
+
+class DecoderOptimizer(Decoder, OptimizerAbstraction):
+    def __init__(self, **kwargs):
+        self._input = T.tensor3('x')
+        self._target = T.imatrix('t')
+
+        Decoder.__init__(self, self._input, **kwargs)
+        OptimizerAbstraction.__init__(self, **kwargs)
+
+    def test_value(self, x, t):
+        self._input.tag.test_value = x
+        self._target.tag.test_value = t
+
+    def _loss_scanner(self, *args, **kwargs):
+        return SutskeverNetwork._loss_scanner(self, *args, **kwargs)
+
+    def _loss(self, *args, **kwargs):
+        return SutskeverNetwork._loss(self, *args, **kwargs)
+
+def test_sutskever_decoder_train():
+
+    decoder = DecoderOptimizer()
+    # Setup theano tap.test_value
+    decoder.test_value(*quadrant_cumsum_decoder_sequence(10))
+
+    # Setup layers for a logistic classifier model
+    decoder.set_input(neural.layer.Input(2))
+    decoder.push_layer(neural.layer.LSTM(4))
+    decoder.push_layer(neural.layer.Softmax(4))
+
+    # Setup loss function
+    decoder.set_loss(neural.loss.NaiveEntropy())
+
+    # Compile train, test and predict functions
+    decoder.compile()
+
+    test.classifier(
+        decoder, quadrant_cumsum_decoder_sequence,
+        y_shape=(100, 4, 5), performance=0.6, plot=True,
+        epochs=800
+    )
+
+test_sutskever_decoder_train()

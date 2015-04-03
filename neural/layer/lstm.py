@@ -61,6 +61,9 @@ class LSTM:
         b_ω1_t = b_1_t[:, self._splits[3]:self._splits[4]]  # output gate
 
         # Calculate state and block output
+        print('s_c1_tm1', s_c1_tm1)
+        print('s_c1_tm1', s_c1_tm1.shape.tag.test_value)
+        print('b_h1_tm1', b_h1_tm1.shape.tag.test_value)
         s_c1_t = b_ɸ1_t * s_c1_tm1 + b_ρ1_t * b_i1_t
         b_h1_t = b_ω1_t * T.nnet.sigmoid(s_c1_t)
 

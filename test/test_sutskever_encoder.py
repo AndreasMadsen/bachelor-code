@@ -7,7 +7,7 @@ import theano
 import theano.tensor as T
 
 import neural
-from neural.network.sutskever import Encoder, Decoder
+from neural.network.sutskever import Encoder
 
 def test_sutskever_encoder():
     # obs: 2, dims: 3, time: 6

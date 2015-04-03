@@ -14,10 +14,22 @@ def quadrant_cumsum_classify(items, T=5):
     X = np.random.uniform(low=-1, high=1, size=(items, 2, T)).astype('float32')
     Xsum = np.cumsum(X, axis=2)
 
-    t = np.zeros((items, 5), dtype='int32')
+    t = np.zeros((items, T), dtype='int32')
     t += np.all([Xsum[:, 0, :] < 0 , Xsum[:, 1, :] >= 0], axis=0) * 1
     t += np.all([Xsum[:, 0, :] < 0 , Xsum[:, 1, :] < 0] , axis=0) * 2
     t += np.all([Xsum[:, 0, :] >= 0, Xsum[:, 1, :] < 0] , axis=0) * 3
+    return (X, t)
+
+def quadrant_cumsum_decoder_sequence(items, T=15):
+    (X, t) = quadrant_cumsum_classify(items, T=T)
+
+    # Let the first quadrant be the <EOS> symbol
+    for i in range(0, items):
+        eos_index = T
+        search = np.where(np.asarray(t[i, :]) == 0)[0]
+        if (search.size > 0): eos_index = search[0]
+        t[i, eos_index:]  = 0
+
     return (X, t)
 
 def subset_vocal_sequence(items, Tmin=5, Tmax=7):
