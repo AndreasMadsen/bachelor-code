@@ -36,6 +36,9 @@ def quadrant_cumsum_decoder_sequence(items, T=15):
         if (search.size > 0): eos_index = search[0]
         t[i, eos_index:]  = 0
 
+    # Force end for the last time step
+    t[:, -1] = 0
+
     return (X, t)
 
 def subset_vocal_sequence(items, Tmin=5, Tmax=7):
