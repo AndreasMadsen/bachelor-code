@@ -37,7 +37,7 @@ def _test_sutskever_network():
     test.classifier(
         sutskever, subset_vocal_sequence,
         y_shape=(100, 4, 5), performance=0.6, asserts=False, plot=True,
-        epochs=150
+        epochs=200
     )
 
     def mat2str(mat):
@@ -58,3 +58,4 @@ def _test_sutskever_network():
     print(mat2str(t))
 
     theano.config.compute_test_value = 'warn'
+_test_sutskever_network()

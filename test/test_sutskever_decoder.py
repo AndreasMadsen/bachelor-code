@@ -112,11 +112,18 @@ def _test_sutskever_decoder_train():
     # Compile train, test and predict functions
     decoder.compile()
 
-    # FIXME: train fail in runtime, subtensor error
     test.classifier(
         decoder, quadrant_cumsum_decoder_sequence,
-        y_shape=(100, 4, 5), performance=0.6, plot=True,
-        epochs=800
+        y_shape=(100, 4, 5), performance=0.6, plot=True, asserts=False,
+        epochs=500
     )
 
+    (b_enc, t) = quadrant_cumsum_decoder_sequence(10)
+    y = decoder.predict(b_enc)
+
+    print(y)
+    print(np.argmax(y, axis=1))
+    print(t)
+
     theano.config.compute_test_value = 'warn'
+_test_sutskever_decoder_train()
