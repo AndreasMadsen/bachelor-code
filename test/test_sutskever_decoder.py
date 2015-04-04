@@ -15,9 +15,9 @@ def test_sutskever_decoder_fast():
     # obs: 2, dims: 4, time: NA
     b_enc = np.asarray([
         [1, 0, 1, 1],
-        [0, 6, 2, 0]
+        [0, 2, 2, 0]
     ], dtype='float32')
-    b_input = T.matrix('b', dtype='float32')
+    b_input = T.matrix('b_enc', dtype='float32')
     b_input.tag.test_value = b_enc
 
     # Create encoder
@@ -58,9 +58,6 @@ def test_sutskever_decoder_fast():
     # T.grad(T.sum(y), weights)
 
     # Assert output
-    # FIXME: outputs are exactly the same
-    print(y.tag.test_value)
-    # FIXME: with the latest fixes, <EOS> is optained immediatly
     assert_equal(y.tag.test_value.shape, (2, 3, 2))
 
     # The first sequences ends after 1 iteration
@@ -78,7 +75,6 @@ def test_sutskever_decoder_fast():
         [0.69669789, 0.09191318, 0.21138890]
     ]))
     assert_equal(eois[1].tag.test_value, 1)
-test_sutskever_decoder_fast()
 
 class DecoderOptimizer(Decoder, OptimizerAbstraction):
     def __init__(self, **kwargs):

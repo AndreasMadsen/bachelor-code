@@ -5,6 +5,9 @@ import numpy as np
 import theano
 import theano.tensor as T
 
+from neural.layer.lstm import LSTM
+from neural.layer.rnn import RNN
+
 from neural.network._base import BaseAbstraction
 from neural.network._debug import DebugAbstraction
 from neural.network._optimizer import OptimizerAbstraction
@@ -222,7 +225,12 @@ class Decoder(BaseAbstraction, DebugAbstraction):
         outputs_info = super()._outputs_info_list()
 
         # 1) Replace the initial b_{t_0} with b_enc for the first layer
-        outputs_info[1] = b_enc
+        if (isinstance(self._layers[1], LSTM)):
+            outputs_info[1] = b_enc
+        elif (isinstance(self._layers[1], RNN)):
+            outputs_info[0] = b_enc
+        else:
+            raise NotImplemented
 
         # 2) Replace the initial y_{t_0} with 0, and add taps = -1
         y = T.zeros((b_enc.shape[0], self._layers[-1].output_size))
