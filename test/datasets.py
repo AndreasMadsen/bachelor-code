@@ -21,7 +21,13 @@ def quadrant_cumsum_classify(items, T=5):
     return (X, t)
 
 def quadrant_cumsum_decoder_sequence(items, T=15):
-    (X, t) = quadrant_cumsum_classify(items, T=T)
+    X = np.random.uniform(low=-1, high=1, size=(items, T)).astype('float32')
+    Xsum = np.cumsum(X, axis=1)
+
+    t = np.zeros((items, T), dtype='int32')
+    t += np.all([+0.0 <= Xsum, Xsum < +0.5], axis=0) * 1
+    t += np.all([-0.5 <= Xsum, Xsum < +0.0], axis=0) * 2
+    t += np.all([-1.0 <= Xsum, Xsum < -0.5], axis=0) * 3
 
     # Let the first quadrant be the <EOS> symbol
     for i in range(0, items):

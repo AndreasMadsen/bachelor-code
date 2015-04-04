@@ -44,12 +44,14 @@ class LSTM:
 
         self._forward = self._lstm_input_units()
 
-        self.outputs_info.append(
-            T.zeros((batch_size, self.output_size), dtype='float32'),  # s_c_tm1 (ops x dims)
-        )
-        self.outputs_info.append(
-            T.zeros((batch_size, self.output_size), dtype='float32'),  # b_h_tm1 (ops x dims)
-        )
+        s_c_tm1 = T.zeros((batch_size, self.output_size), dtype='float32')
+        s_c_tm1.name = "s_c%d" % (self.layer_index)
+
+        b_h_tm1 = T.zeros((batch_size, self.output_size), dtype='float32')
+        b_h_tm1.name = "b_h%d" % (self.layer_index)
+
+        self.outputs_info.append(s_c_tm1)
+        self.outputs_info.append(b_h_tm1)
 
     def scanner(self, b_h0_t, s_c1_tm1, b_h1_tm1, mask=None):
         b_1_t = self._forward(b_h0_t, b_h1_tm1)
@@ -61,9 +63,6 @@ class LSTM:
         b_ω1_t = b_1_t[:, self._splits[3]:self._splits[4]]  # output gate
 
         # Calculate state and block output
-        print('s_c1_tm1', s_c1_tm1)
-        print('s_c1_tm1', s_c1_tm1.shape.tag.test_value)
-        print('b_h1_tm1', b_h1_tm1.shape.tag.test_value)
         s_c1_t = b_ɸ1_t * s_c1_tm1 + b_ρ1_t * b_i1_t
         b_h1_t = b_ω1_t * T.nnet.sigmoid(s_c1_t)
 

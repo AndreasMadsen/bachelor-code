@@ -38,9 +38,10 @@ class RNN:
 
         self._forward = self._input_unit('h')
 
-        self.outputs_info.append(
-            T.zeros((batch_size, self.output_size), dtype='float32'),  # b_h_tm1 (ops x dims)
-        )
+        b_h_tm1 = T.zeros((batch_size, self.output_size), dtype='float32')
+        b_h_tm1.name = "b_h%d" % (self.layer_index)
+
+        self.outputs_info.append(b_h_tm1)
 
     def scanner(self, b_h0_t, b_h1_tm1, mask=None):
         a_h1_t = self._forward(b_h0_t, b_h1_tm1)

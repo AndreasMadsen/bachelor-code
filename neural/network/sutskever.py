@@ -92,7 +92,8 @@ class SutskeverNetwork(OptimizerAbstraction, DebugAbstraction):
             non_sequences=[
                 y.shape[1],
                 T.max([y.shape[2], t.shape[1]])
-            ]
+            ],
+            name='sutskever_loss'
         )
 
         return (y_pad, t_pad)
@@ -160,7 +161,8 @@ class Encoder(BaseAbstraction, DebugAbstraction):
             sequences=[
                 x.transpose(2, 0, 1)  # iterate (time), row (observations), col (dims)
             ],
-            outputs_info=self._outputs_info_list()
+            outputs_info=self._outputs_info_list(),
+            name='sutskever_encoder'
         )
         b_enc = self._last_output(outputs)
 
@@ -185,7 +187,6 @@ class Decoder(BaseAbstraction, DebugAbstraction):
         """
         Defines the forward equations for each time step.
         """
-        print(*args)
         args = list(args)
         y = args.pop()
 
@@ -200,7 +201,6 @@ class Decoder(BaseAbstraction, DebugAbstraction):
         # taps where provided using the `outputs_info` property.
         for layer in self._layers[1:]:
             taps = self._infer_taps(layer)
-            print(*args[curr:curr + taps])
             layer_outputs = layer.scanner(prev_output, *args[curr:curr + taps], mask=mask_col)
 
             curr += taps
@@ -221,24 +221,23 @@ class Decoder(BaseAbstraction, DebugAbstraction):
     def _outputs_info_list(self, b_enc):
         outputs_info = super()._outputs_info_list()
 
-        print(*outputs_info)
-
         # 1) Replace the initial b_{t_0} with b_enc for the first layer
-        outputs_info = [b_enc] + outputs_info[1:]
+        outputs_info[1] = b_enc
 
         # 2) Replace the initial y_{t_0} with 0, and add taps = -1
-        y = T.zeros((b_enc.shape[0], self._layers[0].output_size))
-        outputs_info = outputs_info[:-1] + [y]
+        y = T.zeros((b_enc.shape[0], self._layers[-1].output_size))
+        y.name = 'y'
+        outputs_info[-1] = y
 
         # 3) Initialize with no mask
         mask = T.zeros((b_enc.shape[0], ), dtype='int8')
+        mask.name = 'mask'
         outputs_info = [mask] + outputs_info
 
         # 4) Initialize the <EOS> index counter
         eosi = (self._maxlength - 1) * T.ones((b_enc.shape[0], ), dtype='int32')
+        eosi.name = 'eosi'
         outputs_info = [eosi] + outputs_info
-
-        print(*outputs_info)
 
         return outputs_info
 
@@ -250,10 +249,14 @@ class Decoder(BaseAbstraction, DebugAbstraction):
         # transposed into (time, obs, dims).
         # When done $b1$ and $y$ will be tensors with the shape (time, obs, dims)
         # this is then transposed back to its original format
+        time_seq = T.arange(0, self._maxlength)
+        time_seq.name = 'time'
+
         outputs, _ = theano.scan(
             fn=self._forward_scanner,
-            sequences=[T.arange(0, self._maxlength)],
-            outputs_info=self._outputs_info_list(b_enc)
+            sequences=[time_seq],
+            outputs_info=self._outputs_info_list(b_enc),
+            name='sutskever_decoder'
         )
 
         eosi = outputs[0][-1, :]
