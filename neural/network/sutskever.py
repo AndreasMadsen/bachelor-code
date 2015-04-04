@@ -64,7 +64,7 @@ class SutskeverNetwork(OptimizerAbstraction, DebugAbstraction):
         yend = eosi_i + 1
 
         # Get length of t seqence including the first <EOS>
-        tend = T.nonzero(T.eq(t_i, 0))[0][0] + 1
+        tend = T.argmin(t_i) + 1
 
         # Create a new y sequence with T elements
         fill_size = T.max([0, tend - yend])
