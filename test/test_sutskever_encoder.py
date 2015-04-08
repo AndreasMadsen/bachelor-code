@@ -1,5 +1,6 @@
 
 import test
+from datasets import mode_encoder_sequence
 from nose.tools import *
 
 import numpy as np
@@ -7,9 +8,10 @@ import theano
 import theano.tensor as T
 
 import neural
+from neural.network._optimizer import OptimizerAbstraction
 from neural.network.sutskever import Encoder
 
-def test_sutskever_encoder():
+def test_sutskever_encoder_fast():
     # obs: 2, dims: 3, time: 6
     x1 = np.asarray([
         [0, 0, 0, 1, 1, 1],  # <EOS>
@@ -60,3 +62,40 @@ def test_sutskever_encoder():
         [0.86412394, 0.27515879, 0.74134195, 0.82611161],
         [0.86167115, 0.28139967, 0.78435278, 0.85536474]
     ]))
+
+class EncoderOptimizer(Encoder, OptimizerAbstraction):
+    def __init__(self, **kwargs):
+        self._input = T.tensor3('x')
+        self._target = T.ivector('t')
+
+        Encoder.__init__(self, self._input, **kwargs)
+        OptimizerAbstraction.__init__(self, **kwargs)
+
+    def test_value(self, x, b_enc):
+        self._input.tag.test_value = x
+        self._target.tag.test_value = b_enc
+
+def _test_sutskever_encoder_train():
+    encoder = EncoderOptimizer()
+    # Setup theano tap.test_value
+    encoder.test_value(*mode_encoder_sequence(10))
+
+    # Setup layers for a logistic classifier model
+    encoder.set_input(neural.layer.Input(10))
+    encoder.push_layer(neural.layer.LSTM(15))
+    encoder.push_layer(neural.layer.Softmax(10))
+
+    # Setup loss function
+    encoder.set_loss(neural.loss.NaiveEntropy(time=False))
+
+    # Compile train, test and predict functions
+    encoder.compile()
+
+    test.classifier(
+        encoder, mode_encoder_sequence,
+        y_shape=(100, 10), performance=0.8, plot=True,
+        epochs=1000
+    )
+
+    (x, t) = mode_encoder_sequence(10)
+    b_enc = encoder.predict(x)

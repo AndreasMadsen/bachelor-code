@@ -60,8 +60,8 @@ def classifier(model, generator, y_shape, performance, epochs=100, asserts=True,
     y = model.predict(test_dataset[0])
     if (asserts): assert_equal(y.shape, y_shape)
     # TODO: likely wrong in CTC problem. Misses was 0.0
-    misses = np.mean(np.argmax(y, axis=1) == test_dataset[1])
-    if (asserts): assert(misses > performance)
-    if (plot): print(misses)
+    misses = np.mean(np.argmax(y, axis=1) != test_dataset[1])
+    if (plot): print('miss classifications:', misses)
+    if (asserts): assert((1 - misses) > performance)
 
 __all__ = ['classifier']

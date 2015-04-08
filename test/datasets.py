@@ -1,6 +1,14 @@
 
 import numpy as np
 
+
+def _index_to_indicator(matrix, maxIndex):
+    shape = matrix.shape
+    tensor = np.zeros((shape[0], maxIndex, shape[1]), dtype='float32')
+    (obs, time) = np.mgrid[0:shape[0], 0:shape[1]]
+    tensor[obs, matrix, time] = 1
+    return tensor
+
 def quadrant_classify(items, T=5):
     X = np.random.uniform(low=-1, high=1, size=(items, 2, T)).astype('float32')
 
@@ -41,6 +49,26 @@ def quadrant_cumsum_decoder_sequence(items, T=15):
 
     return (X, t)
 
+def mode_encoder_sequence(items, Tmin=17, Tmax=20):
+    maxIndex = 10
+
+    t = np.random.randint(1, maxIndex, size=(items, )).astype('int32')
+    X = np.tile(t[:, np.newaxis], (1, Tmax))
+
+    # Substitute random elements
+    randsprseq = int(0.4 * Tmax)
+    X[
+        np.arange(0, items).repeat(randsprseq),
+        np.random.randint(0, Tmax, size=(items * randsprseq))
+    ] = np.random.randint(1, maxIndex, size=(items * randsprseq))
+
+    # Stop the X sequence
+    for i in range(0, items):
+        stop = np.random.randint(Tmin, Tmax)
+        X[i, stop:] = 0
+
+    return (_index_to_indicator(X, 10), t)
+
 def subset_vocal_sequence(items, Tmin=5, Tmax=7):
     """
     This will generate a random input and target sequence of letters.
@@ -68,14 +96,7 @@ def subset_vocal_sequence(items, Tmin=5, Tmax=7):
         vocal_scan = letters[index, vocal_mask[index, :].nonzero()].ravel()
         vocals[index, 0:vocal_scan.size] = vocal_scan
 
-    def index_to_indicator(matrix, maxIndex):
-        shape = matrix.shape
-        tensor = np.zeros((shape[0], maxIndex, shape[1]), dtype='float32')
-        (obs, time) = np.mgrid[0:shape[0], 0:shape[1]]
-        tensor[obs, matrix, time] = 1
-        return tensor
-
     return (
-        index_to_indicator(letters, max_letter + 1),
+        _index_to_indicator(letters, max_letter + 1),
         vocals
     )
