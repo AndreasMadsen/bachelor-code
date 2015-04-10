@@ -93,7 +93,7 @@ def _test_sutskever_encoder_train():
 
     test.classifier(
         encoder, mode_encoder_sequence,
-        y_shape=(100, 10), performance=0.8, plot=True,
+        y_shape=(100, 10), performance=0.8,
         epochs=1000
     )
 
