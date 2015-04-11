@@ -121,6 +121,7 @@ class Encoder(BaseAbstraction, DebugAbstraction):
     def __init__(self, x_input, **kwargs):
         BaseAbstraction.__init__(self, **kwargs)
         DebugAbstraction.__init__(self, **kwargs)
+        # self._input is only used by the layers, to infer the batch size.
         self._input = x_input
 
     def _forward_scanner(self, x_t, *args):
@@ -180,38 +181,46 @@ class Decoder(BaseAbstraction, DebugAbstraction):
     obtained by letting the hidden output of $t$ go into $t + 1$. The <EOF>
     tag signals when to stop.
     """
-    def __init__(self, b_input, maxlength=100, **kwargs):
+    def __init__(self, x_input, maxlength=100, **kwargs):
         BaseAbstraction.__init__(self, **kwargs)
         DebugAbstraction.__init__(self, **kwargs)
-        self._input = b_input
+        # self._input is only used by the layers, to infer the batch size.
+        self._input = x_input
         self._maxlength = maxlength
 
     def _forward_scanner(self, t, eosi, mask, *args):
         """
         Defines the forward equations for each time step.
         """
+        # The last argument is the network output (after softmax)
         args = list(args)
         y = args.pop()
 
-        # Intialize loop
+        # Intialize layer loop
         all_outputs = []
         curr = 0
         prev_output = y
         mask_col = mask.dimshuffle((0, 'x'))
 
-        # Loop though each layer and apply send the previous layers output
+        # Loop though each layer and apply send the current layers output
         # to the next layer. The layer can have additional paramers, if
         # taps where provided using the `outputs_info` property.
         for layer in self._layers[1:]:
             taps = self._infer_taps(layer)
+            # It can be assumed that the last value in `layer_outputs` is the
+            # actual layer output. The tuple may contain other values, such
+            # as the current cell state. They won't be send to the next layer.
             layer_outputs = layer.scanner(prev_output, *args[curr:curr + taps], mask=mask_col)
-
             curr += taps
+
+            # Concatenate all outputs
             all_outputs += layer_outputs
-            # the last output is assumed to be the layer output
+            # The last output is assumed to be the layer output
             prev_output = layer_outputs[-1]
 
-        # Update the mask, if <EOS> was returned by the last iteration
+        # Update the mask, if <EOS> was returned by the last iteration.
+        # At this point the prev_output is the last layer_output and is
+        # thus the network output.
         new_mask = T.eq(T.argmax(prev_output, axis=1), 0)
         # Update eosi where new observations have ended `new_mask - mask`
         eosi = T.set_subtensor(eosi[T.nonzero(new_mask - mask)[0]], t)
@@ -242,21 +251,23 @@ class Decoder(BaseAbstraction, DebugAbstraction):
         mask.name = 'mask'
         outputs_info = [mask] + outputs_info
 
-        # 4) Initialize the <EOS> index counter
+        # 4) Initialize the <EOS> index counter, to be the last possibol
+        # index. This way, if the scanner doesn't end by <EOS> the eosi
+        # will still be meaningful in the used context.
         eosi = (self._maxlength - 1) * T.ones((b_enc.shape[0], ), dtype='int32')
         eosi.name = 'eosi'
         outputs_info = [eosi] + outputs_info
 
+        # outputs_info will look like [eois, mask, ..., y]
         return outputs_info
 
     def forward_pass(self, b_enc):
         """
         Setup equations for the forward pass
         """
-        # because scan assmes the iterable is the first tensor dimension, x is
-        # transposed into (time, obs, dims).
-        # When done $b1$ and $y$ will be tensors with the shape (time, obs, dims)
-        # this is then transposed back to its original format
+        # To create an <EOS> index vector (eosi) the time index is needed.
+        # Use `arange` to generate a vector with all the time indexes. The
+        # `scan` may finish before because the `until` condition becomes true.
         time_seq = T.arange(0, self._maxlength)
         time_seq.name = 'time'
 
@@ -268,5 +279,8 @@ class Decoder(BaseAbstraction, DebugAbstraction):
         )
 
         eosi = outputs[0][-1, :]
-        y = self._last_output(outputs)
-        return (eosi, y.transpose(1, 2, 0))
+
+        # The scan output have the shape (time, dims, observations)
+        y = outputs[-1].transpose(1, 2, 0)
+
+        return (eosi, y)
