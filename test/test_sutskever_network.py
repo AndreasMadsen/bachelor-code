@@ -58,4 +58,3 @@ def _test_sutskever_network():
     print(mat2str(t))
 
     theano.config.compute_test_value = 'warn'
-_test_sutskever_network()

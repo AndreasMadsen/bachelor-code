@@ -69,6 +69,22 @@ def mode_encoder_sequence(items, Tmin=17, Tmax=20):
 
     return (_index_to_indicator(X, 10), t)
 
+def count_decoder_sequence(items, T=20):
+    # Create initial value
+    X = np.random.uniform(0, 10, size=(items, 2))
+    X_sub = X[:, 1][:, np.newaxis]
+
+    # Create targe by incrementing
+    inc = np.tile(np.arange(0, 8), (items, 1))
+    t = np.mod(X_sub + inc, 10)
+    t = np.floor(t)
+
+    # add <EOS>
+    t = t + 1
+    t = np.hstack([t, np.zeros((items, 1))])
+
+    return (X.astype('float32'), t.astype('int32'))
+
 def subset_vocal_sequence(items, Tmin=5, Tmax=7):
     """
     This will generate a random input and target sequence of letters.

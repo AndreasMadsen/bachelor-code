@@ -31,6 +31,8 @@ if (not is_optimize and not is_HPC):
     theano.config.optimizer = 'None'
     theano.config.linker = 'py'
     theano.config.exception_verbosity = 'high'
+else:
+    print('Theano optimizer enabled')
 
 def classifier(model, generator, y_shape, performance, epochs=100, asserts=True, plot=False):
     # Setup dataset and train model

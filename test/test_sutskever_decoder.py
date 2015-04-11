@@ -1,6 +1,6 @@
 
 import test
-from datasets import quadrant_cumsum_decoder_sequence
+from datasets import count_decoder_sequence
 from nose.tools import *
 
 import numpy as np
@@ -97,14 +97,16 @@ class DecoderOptimizer(Decoder, OptimizerAbstraction):
 def _test_sutskever_decoder_train():
     theano.config.compute_test_value = 'off'
 
-    decoder = DecoderOptimizer()
+    decoder = DecoderOptimizer(eta=0.001, momentum=0.01)
     # Setup theano tap.test_value
-    decoder.test_value(*quadrant_cumsum_decoder_sequence(10))
+    decoder.test_value(*count_decoder_sequence(10))
 
     # Setup layers for a logistic classifier model
-    decoder.set_input(neural.layer.Input(4))  # Should match output
-    decoder.push_layer(neural.layer.LSTM(15))  # Should match b_enc input
-    decoder.push_layer(neural.layer.Softmax(4))
+    decoder.set_input(neural.layer.Input(11))  # Should match output
+    decoder.push_layer(neural.layer.LSTM(2, bias=True))  # Should match b_enc input
+    decoder.push_layer(neural.layer.LSTM(22, bias=True))
+    decoder.push_layer(neural.layer.LSTM(22, bias=True))
+    decoder.push_layer(neural.layer.Softmax(11, bias=True))
 
     # Setup loss function
     decoder.set_loss(neural.loss.NaiveEntropy())
@@ -113,12 +115,12 @@ def _test_sutskever_decoder_train():
     decoder.compile()
 
     test.classifier(
-        decoder, quadrant_cumsum_decoder_sequence,
+        decoder, count_decoder_sequence,
         y_shape=(100, 4, 5), performance=0.6, plot=True, asserts=False,
-        epochs=500
+        epochs=1500
     )
 
-    (b_enc, t) = quadrant_cumsum_decoder_sequence(10)
+    (b_enc, t) = count_decoder_sequence(10)
     y = decoder.predict(b_enc)
 
     print(y)
