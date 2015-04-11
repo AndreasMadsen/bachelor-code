@@ -4,7 +4,8 @@ import theano
 import theano.tensor as T
 
 class Softmax:
-    def __init__(self, size):
+    def __init__(self, size, bias=False):
+        self._use_bias = bias
         self.output_size = size
         self.weights = []
         self.outputs_info = []
@@ -18,12 +19,22 @@ class Softmax:
             name="W_h%d_h%d" % (self.layer_index - 1, self.layer_index),
             borrow=True
         )
-
         self.weights.append(self._W_h0_h1)
+
+        if (self._use_bias):
+            self._W_b0_h1 = theano.shared(
+                np.zeros(self.output_size).astype('float32'),
+                name="W_b%d_h%d" % (self.layer_index - 1, self.layer_index),
+                borrow=True
+            )
+            self.weights.append(self._W_b0_h1)
+        else:
+            self._W_b0_h1 = 0
+
         self.outputs_info.append(None)
 
     def scanner(self, b_h0_t, mask=None):
-        a_h1_t = T.dot(b_h0_t, self._W_h0_h1)
+        a_h1_t = T.dot(b_h0_t, self._W_h0_h1) + self._W_b0_h1
         y_h1_t = T.nnet.softmax(a_h1_t)
 
         # It is not nessarry to do something with the mask,

@@ -4,7 +4,8 @@ import theano
 import theano.tensor as T
 
 class LSTM:
-    def __init__(self, size):
+    def __init__(self, size, bias=False):
+        self._use_bias = bias
         self.output_size = size
         self.weights = []
         self.outputs_info = []
@@ -31,8 +32,18 @@ class LSTM:
         )
         self.weights.append(W11)
 
+        if (self._use_bias):
+            Wb = theano.shared(
+                np.zeros(size[1] * 4).astype('float32'),
+                name="W_b%d_h%d" % (index - 1, index),
+                borrow=True
+            )
+            self.weights.append(Wb)
+        else:
+            Wb = 0
+
         def forward(b_h0_t, b_h1_tm1):
-            a_1_t = T.dot(b_h0_t, W01) + T.dot(b_h1_tm1, W11)
+            a_1_t = T.dot(b_h0_t, W01) + T.dot(b_h1_tm1, W11) + Wb
             b_1_t = T.nnet.sigmoid(a_1_t)
             return b_1_t
 

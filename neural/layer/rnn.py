@@ -4,31 +4,42 @@ import theano
 import theano.tensor as T
 
 class RNN:
-    def __init__(self, size):
+    def __init__(self, size, bias=False):
+        self._use_bias = bias
         self.output_size = size
         self.weights = []
         self.outputs_info = []
 
-    def _input_unit(self, symbol):
+    def _rnn_input_unit(self):
         size = [self.input_size, self.output_size]
         index = self.layer_index
 
         W01 = theano.shared(
             np.random.randn(size[0], size[1]).astype('float32'),
-            name="W_%s%d_%s%d" % (symbol, index - 1, symbol, index),
+            name="W_h%d_h%d" % (index - 1, index),
             borrow=True
         )
         self.weights.append(W01)
 
         W11 = theano.shared(
             np.random.randn(size[1], size[1]).astype('float32'),
-            name="W_%s%d_%s%d" % (symbol, index - 1, symbol, index),
+            name="W_h%d_h%d" % (index - 1, index),
             borrow=True
         )
         self.weights.append(W11)
 
+        if (self._use_bias):
+            Wb = theano.shared(
+                np.zeros(size[1]).astype('float32'),
+                name="W_b%d_h%d" % (index - 1, index),
+                borrow=True
+            )
+            self.weights.append(Wb)
+        else:
+            Wb = 0
+
         def forward(b_h0_t, b_h1_tm1):
-            return T.dot(b_h0_t, W01) + T.dot(b_h1_tm1, W11)
+            return T.dot(b_h0_t, W01) + T.dot(b_h1_tm1, W11) + Wb
 
         return forward
 
@@ -36,7 +47,7 @@ class RNN:
         self.layer_index = layer_index
         self.input_size = prev_layer.output_size
 
-        self._forward = self._input_unit('h')
+        self._forward = self._rnn_input_unit()
 
         b_h_tm1 = T.zeros((batch_size, self.output_size), dtype='float32')
         b_h_tm1.name = "b_h%d" % (self.layer_index)
