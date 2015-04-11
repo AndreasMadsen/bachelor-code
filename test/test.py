@@ -6,6 +6,7 @@ import os.path as path
 import sys
 import os
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import theano
@@ -33,6 +34,9 @@ if (not is_optimize and not is_HPC):
     theano.config.exception_verbosity = 'high'
 else:
     print('Theano optimizer enabled')
+
+if (os.environ.get('DISPLAY') is None):
+    mpl.use('Agg')
 
 def classifier(model, generator, y_shape, performance, epochs=100, asserts=True, plot=False):
     # Setup dataset and train model
