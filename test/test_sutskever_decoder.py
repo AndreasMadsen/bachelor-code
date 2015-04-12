@@ -51,7 +51,7 @@ def test_sutskever_decoder_fast():
     ], dtype='float32'))
 
     # Perform forward pass
-    (eois, y) = decoder.forward_pass(b_input)
+    (eois, y) = decoder.forward_pass(None, b_input)
 
     # Check that the gradient can be calculated
     # TODO: debug errors caused by test_value
@@ -76,6 +76,7 @@ def test_sutskever_decoder_fast():
     ]))
     assert_equal(eois[1].tag.test_value, 1)
 
+
 class DecoderOptimizer(Decoder, OptimizerAbstraction):
     def __init__(self, **kwargs):
         self._input = T.matrix('b_enc')
@@ -87,6 +88,12 @@ class DecoderOptimizer(Decoder, OptimizerAbstraction):
     def test_value(self, x, t):
         self._input.tag.test_value = x
         self._target.tag.test_value = t
+
+    def forward_pass(self, b_enc):
+        # Use the hidden input as the cell input too
+        # TODO: consider normalizing the input
+        s_enc = b_enc
+        return Decoder.forward_pass(s_enc, b_enc)
 
     def _loss_scanner(self, *args, **kwargs):
         return SutskeverNetwork._loss_scanner(self, *args, **kwargs)

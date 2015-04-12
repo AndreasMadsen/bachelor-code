@@ -54,8 +54,8 @@ class SutskeverNetwork(OptimizerAbstraction, DebugAbstraction):
         return self._encoder.weight_list() + self._decoder.weight_list()
 
     def forward_pass(self, x):
-        b_enc = self._encoder.forward_pass(x)
-        (eois, y) = self._decoder.forward_pass(b_enc)
+        (s_enc, b_enc) = self._encoder.forward_pass(x)
+        (eois, y) = self._decoder.forward_pass(s_enc, b_enc)
 
         return (eois, y)
 
@@ -172,7 +172,11 @@ class Encoder(BaseAbstraction, DebugAbstraction):
 
         # the last output is assumed to be the network output, take the
         # last time iteration. Return value shape is: row (observations), col (dims)
-        return b_enc[-1, :, :]
+        if (isinstance(self._layers[-1], LSTM)):
+            s_enc = outputs[-2]
+            return (s_enc[-1, :, :], b_enc[-1, :, :])
+        else:
+            return (None, b_enc[-1, :, :])
 
 class Decoder(BaseAbstraction, DebugAbstraction):
     """
@@ -230,14 +234,20 @@ class Decoder(BaseAbstraction, DebugAbstraction):
         # Stop when all sequences are masked
         return (all_outputs, theano.scan_module.until(T.all(new_mask)))
 
-    def _outputs_info_list(self, b_enc):
+    def _outputs_info_list(self, s_enc, b_enc):
         outputs_info = super()._outputs_info_list()
 
         # 1) Replace the initial b_{t_0} with b_enc for the first layer
         if (isinstance(self._layers[1], LSTM)):
             outputs_info[1] = b_enc
+            if (s_enc is not None):
+                outputs_info[0] = s_enc
+
         elif (isinstance(self._layers[1], RNN)):
             outputs_info[0] = b_enc
+            if (s_enc is not None):
+                raise TypeError('s_enc could not be transferred to RNN layer')
+
         else:
             raise NotImplemented
 
@@ -261,7 +271,7 @@ class Decoder(BaseAbstraction, DebugAbstraction):
         # outputs_info will look like [eois, mask, ..., y]
         return outputs_info
 
-    def forward_pass(self, b_enc):
+    def forward_pass(self, s_enc, b_enc):
         """
         Setup equations for the forward pass
         """
@@ -274,7 +284,7 @@ class Decoder(BaseAbstraction, DebugAbstraction):
         outputs, _ = theano.scan(
             fn=self._forward_scanner,
             sequences=[time_seq],
-            outputs_info=self._outputs_info_list(b_enc),
+            outputs_info=self._outputs_info_list(s_enc, b_enc),
             name='sutskever_decoder'
         )
 
