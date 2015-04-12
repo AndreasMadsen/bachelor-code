@@ -128,4 +128,3 @@ def _test_sutskever_decoder_train():
     print(t)
 
     theano.config.compute_test_value = 'warn'
-_test_sutskever_decoder_train()
