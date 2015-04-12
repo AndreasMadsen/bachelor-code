@@ -4,7 +4,7 @@ import theano
 import theano.tensor as T
 
 class LSTM:
-    def __init__(self, size, bias=False):
+    def __init__(self, size, bias=True):
         self._use_bias = bias
         self.output_size = size
         self.weights = []

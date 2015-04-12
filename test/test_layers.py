@@ -6,7 +6,7 @@ import numpy as np
 import neural
 
 def test_softmax_bias():
-    softmax = neural.layer.Softmax(4, bias=True)
+    softmax = neural.layer.Softmax(4)
     softmax.setup(2, 1, neural.layer.Input(3))
 
     assert_equal(len(softmax.weights), 2)
@@ -32,7 +32,7 @@ def test_softmax_bias():
     ]))
 
 def test_softmax_nobias():
-    softmax = neural.layer.Softmax(4)
+    softmax = neural.layer.Softmax(4, bias=False)
     softmax.setup(2, 1, neural.layer.Input(3))
 
     assert_equal(len(softmax.weights), 1)
@@ -55,7 +55,7 @@ def test_softmax_nobias():
     ]))
 
 def test_rnn_bias():
-    rnn = neural.layer.RNN(4, bias=True)
+    rnn = neural.layer.RNN(4)
     rnn.setup(2, 1, neural.layer.Input(3))
 
     assert_equal(len(rnn.weights), 3)
@@ -112,7 +112,7 @@ def test_rnn_bias():
     ]))
 
 def test_rnn_nobias():
-    rnn = neural.layer.RNN(4)
+    rnn = neural.layer.RNN(4, bias=False)
     rnn.setup(2, 1, neural.layer.Input(3))
 
     assert_equal(len(rnn.weights), 2)
@@ -166,7 +166,7 @@ def test_rnn_nobias():
     ]))
 
 def test_lstm_bias():
-    lstm = neural.layer.LSTM(4, bias=True)
+    lstm = neural.layer.LSTM(4)
     lstm.setup(2, 1, neural.layer.Input(3))
 
     assert_equal(len(lstm.weights), 3)
@@ -241,7 +241,7 @@ def test_lstm_bias():
     ]))
 
 def test_lstm_nobias():
-    lstm = neural.layer.LSTM(4)
+    lstm = neural.layer.LSTM(4, bias=False)
     lstm.setup(2, 1, neural.layer.Input(3))
 
     assert_equal(len(lstm.weights), 2)
