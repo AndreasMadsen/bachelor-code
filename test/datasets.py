@@ -85,7 +85,7 @@ def count_decoder_sequence(items, T=20):
 
     return (X.astype('float32'), t.astype('int32'))
 
-def subset_vocal_sequence(items, Tmin=5, Tmax=7):
+def subset_vocal_sequence(items, Tmin=17, Tmax=20):
     """
     This will generate a random input and target sequence of letters.
 
