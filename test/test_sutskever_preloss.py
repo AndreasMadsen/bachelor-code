@@ -61,7 +61,7 @@ def test_sutskever_preloss_yat():
 
     # Run preloss transform
     sutskever = neural.network.Sutskever()
-    (y_pad, t_pad) = sutskever._loss(eosi, y, t)
+    (y_pad, t_pad) = sutskever._preloss(eosi, y, t)
 
     # Assert
     assert(np.allclose(y_pad[0, :, :].tag.test_value, [
@@ -127,7 +127,7 @@ def test_sutskever_preloss_yget():
 
     # Run preloss transform
     sutskever = neural.network.Sutskever()
-    (y_pad, t_pad) = sutskever._loss(eosi, y, t)
+    (y_pad, t_pad) = sutskever._preloss(eosi, y, t)
 
     # Assert
     assert(np.allclose(y_pad[0, :, :].tag.test_value, [
@@ -181,7 +181,7 @@ def test_sutskever_preloss_ylet():
 
     # Run preloss transform
     sutskever = neural.network.Sutskever()
-    (y_pad, t_pad) = sutskever._loss(eosi, y, t)
+    (y_pad, t_pad) = sutskever._preloss(eosi, y, t)
 
     # Assert
     assert(np.allclose(y_pad[0, :, :].tag.test_value, [

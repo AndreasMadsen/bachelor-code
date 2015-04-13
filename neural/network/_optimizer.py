@@ -12,9 +12,6 @@ class OptimizerAbstraction():
 
         self._loss_layer = None
 
-    def debugprint_list(self):
-        return []
-
     def set_loss(self, loss):
         """
         Set the loss function.
@@ -51,8 +48,23 @@ class OptimizerAbstraction():
             in zip(gW, self.weight_list())
         ]))
 
-    def _loss(self, y, t):
+    def _preloss(self, y, t):
         return (y, t)
+
+    def _build_forward_graph(self):
+        forward = self.forward_pass(self._input)
+        if (not isinstance(forward, tuple) and not isinstance(forward, list)):
+            forward = [forward]
+        return forward
+
+    def _build_loss_graph(self, forward):
+        return self._loss_layer.loss(
+            *self._preloss(*forward, t=self._target)
+        )
+
+    def loss_graph(self):
+        forward = self._build_forward_graph()
+        return self._build_loss_graph(forward)
 
     def compile(self):
         """
@@ -65,15 +77,11 @@ class OptimizerAbstraction():
         #
 
         # Create forward pass equations
-        forward = self.forward_pass(self._input)
-        if (not isinstance(forward, tuple) and not isinstance(forward, list)):
-            forward = [forward]
+        forward = self._build_forward_graph()
         y = forward[-1]
 
         # Setup loss function
-        L = self._loss_layer.loss(
-            *self._loss(*forward, t=self._target)
-        )
+        L = self._build_loss_graph(forward)
 
         # Generate backward pass
         gW = self.backward_pass(L)
@@ -83,16 +91,16 @@ class OptimizerAbstraction():
         #
         self._train = theano.function(
             inputs=[self._input, self._target],
-            outputs=[L] + self.debugprint_list(),
+            outputs=[L],
             updates=self._update_functions(gW)
         )
         self._test = theano.function(
             inputs=[self._input, self._target],
-            outputs=[L] + self.debugprint_list()
+            outputs=[L]
         )
         self._predict = theano.function(
             inputs=[self._input],
-            outputs=[y] + self.debugprint_list()
+            outputs=[y]
         )
 
     def train(self, *args):

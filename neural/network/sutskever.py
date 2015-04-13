@@ -9,11 +9,10 @@ from neural.layer.lstm import LSTM
 from neural.layer.rnn import RNN
 
 from neural.network._base import BaseAbstraction
-from neural.network._debug import DebugAbstraction
 from neural.network._optimizer import OptimizerAbstraction
 
 
-class SutskeverNetwork(OptimizerAbstraction, DebugAbstraction):
+class SutskeverNetwork(OptimizerAbstraction):
     """
     Abstraction for creating recurent neural networks
     """
@@ -27,11 +26,6 @@ class SutskeverNetwork(OptimizerAbstraction, DebugAbstraction):
         # encoder -> decoder
         self._encoder = Encoder(self._input)
         self._decoder = Decoder(self._input, maxlength=max_output_size)
-
-    def debugprint_list(self):
-        return (super().debugprint_list() +
-                self._encoder.debugprint_list() +
-                self._decoder.debugprint_list())
 
     def test_value(self, x, t):
         self._input.tag.test_value = x
@@ -59,7 +53,7 @@ class SutskeverNetwork(OptimizerAbstraction, DebugAbstraction):
 
         return (eois, y)
 
-    def _loss_scanner(self, y_i, eosi_i, t_i, dims, time):
+    def _preloss_scanner(self, y_i, eosi_i, t_i, dims, time):
         # Get length of y seqence including the first <EOS>
         yend = eosi_i + 1
 
@@ -87,9 +81,9 @@ class SutskeverNetwork(OptimizerAbstraction, DebugAbstraction):
 
         return [y2_i, t2_i]
 
-    def _loss(self, eosi, y, t):
+    def _preloss(self, eosi, y, t):
         (y_pad, t_pad), _ = theano.scan(
-            fn=self._loss_scanner,
+            fn=self._preloss_scanner,
             sequences=[y, eosi, t],
             outputs_info=[None, None],
             non_sequences=[
@@ -109,7 +103,7 @@ class SutskeverNetwork(OptimizerAbstraction, DebugAbstraction):
 
         super().compile()
 
-class Encoder(BaseAbstraction, DebugAbstraction):
+class Encoder(BaseAbstraction):
     """
     The encoder is like a normal forward scanner but doesn't have an output
     layer applied to it. It also only outputs the last time iteration. This
@@ -120,7 +114,6 @@ class Encoder(BaseAbstraction, DebugAbstraction):
     """
     def __init__(self, x_input, **kwargs):
         BaseAbstraction.__init__(self, **kwargs)
-        DebugAbstraction.__init__(self, **kwargs)
         # self._input is only used by the layers, to infer the batch size.
         self._input = x_input
 
@@ -178,7 +171,7 @@ class Encoder(BaseAbstraction, DebugAbstraction):
         else:
             return (None, b_enc[-1, :, :])
 
-class Decoder(BaseAbstraction, DebugAbstraction):
+class Decoder(BaseAbstraction):
     """
     The decoder takes the encoder output for the last time iteration and
     passes it intro a forward iteration. The next output iteration is then
@@ -187,7 +180,6 @@ class Decoder(BaseAbstraction, DebugAbstraction):
     """
     def __init__(self, x_input, maxlength=100, **kwargs):
         BaseAbstraction.__init__(self, **kwargs)
-        DebugAbstraction.__init__(self, **kwargs)
         # self._input is only used by the layers, to infer the batch size.
         self._input = x_input
         self._maxlength = maxlength
@@ -268,7 +260,7 @@ class Decoder(BaseAbstraction, DebugAbstraction):
         eosi.name = 'eosi'
         outputs_info = [eosi] + outputs_info
 
-        # outputs_info will look like [eois, mask, ..., y]
+        # outputs_info will look like [eois, mask, s_enc, b_enc, ..., y]
         return outputs_info
 
     def forward_pass(self, s_enc, b_enc):
