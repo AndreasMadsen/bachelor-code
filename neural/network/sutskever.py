@@ -53,7 +53,7 @@ class SutskeverNetwork(OptimizerAbstraction):
 
         return (eois, y)
 
-    def _preloss_scanner(self, y_i, eosi_i, t_i, dims, time):
+    def _preloss_scanner(self, y_i, eosi_i, t_i, y_pad, dims, time):
         # Get length of y seqence including the first <EOS>
         yend = eosi_i + 1
 
@@ -62,31 +62,34 @@ class SutskeverNetwork(OptimizerAbstraction):
 
         # Create a new y sequence with T elements
         fill_size = T.max([0, tend - yend])
-        y2_i = T.concatenate([
-            # Keep the actual y elements
-            y_i[:, :yend],
-            # Fill in missing y2 elements with an even distribution.
-            T.ones((y_i.shape[0], fill_size)) / dims,
-            # Add ignore padding to y2 for the remaining elments
-            T.ones((y_i.shape[0], time - fill_size - yend))
-        ], axis=1)
+        y2_i = T.zeros((dims, time), dtype='float32')
+        # Keep the actual y elements
+        y2_i = T.set_subtensor(y2_i[:, :yend], y_i[:, :yend])
+        # Add ignore padding to y2 for the remaining elments
+        y2_i = T.set_subtensor(y2_i[:, yend:], y_pad)
 
         # Createa a new t seqnece with T elements
-        t2_i = T.concatenate([
-            # Keep the actual t elements
-            t_i[:tend],
-            # Add <EOS> padding to t2 for the remaining elments, the y2 padding will ignore this
-            T.zeros((time - tend,), dtype='int32')
-        ], axis=0)
+        t2_i = T.zeros((time, ), dtype='int32')
+        # Keep the actual t elements
+        t2_i = T.set_subtensor(t2_i[:tend], t_i[:tend])
+        # Add <EOS> padding to t2 for the remaining elments,
+        # the y2 padding will ignore this
+        # -- No code, since 0 from T.zeros is <EOS>
 
         return [y2_i, t2_i]
 
     def _preloss(self, eosi, y, t):
+        # Create an <EOS> collum vector
+        y_pad = T.zeros((y.shape[1], ))
+        y_pad = T.set_subtensor(y_pad[0], 1)
+        y_pad = y_pad.dimshuffle((0, 'x'))
+
         (y_pad, t_pad), _ = theano.scan(
             fn=self._preloss_scanner,
             sequences=[y, eosi, t],
             outputs_info=[None, None],
             non_sequences=[
+                y_pad,
                 y.shape[1],
                 T.max([y.shape[2], t.shape[1]])
             ],
