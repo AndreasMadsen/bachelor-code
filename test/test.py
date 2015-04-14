@@ -33,16 +33,19 @@ if (not is_optimize and not is_HPC):
     theano.config.optimizer = 'None'
     theano.config.linker = 'py'
     theano.config.exception_verbosity = 'high'
-if (theano.config.optimizer != 'None'):
+if (theano.config.optimizer != 'fast_run'):
     print('Theano optimizer enabled')
 
 def classifier(model, generator, y_shape, performance, epochs=100, asserts=True, plot=False):
+    if (plot): print('testing classifier')
+
     # Setup dataset and train model
     test_dataset = generator(100)
 
     train_error = np.zeros(epochs)
     test_error = np.zeros(epochs)
     for i in range(0, epochs):
+        if (plot): print('  running train epoch %d' % i)
         train_error[i] = model.train(*generator(500))
         test_error[i] = model.test(*test_dataset)
 

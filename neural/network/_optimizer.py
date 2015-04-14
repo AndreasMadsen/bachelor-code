@@ -1,15 +1,23 @@
 
 import itertools
 
+import datetime
 import numpy as np
 import theano
 import theano.tensor as T
 
+def get_tick():
+    return datetime.datetime.now()
+
+def get_tock(tick):
+    return (datetime.datetime.now() - tick).total_seconds() * 1000
+
 class OptimizerAbstraction():
-    def __init__(self, eta=0.1, momentum=0.9, **kwargs):
+    def __init__(self, eta=0.1, momentum=0.9, verbose=False, **kwargs):
         self._eta = eta
         self._momentum = momentum
 
+        self._verbose = verbose
         self._loss_layer = None
 
     def set_loss(self, loss):
@@ -75,20 +83,31 @@ class OptimizerAbstraction():
         #
         # Setup equations
         #
+        if (self._verbose):
+            print('compiling network')
+            if (theano.config.optimizer != 'fast_run'):
+                print('  NOTE: optimizer is disabled')
 
         # Create forward pass equations
+        tick = get_tick()
         forward = self._build_forward_graph()
         y = forward[-1]
+        if (self._verbose): print('  forward pass generated, took %d ms' % get_tock(tick))
 
         # Setup loss function
+        tick = get_tick()
         L = self._build_loss_graph(forward)
+        if (self._verbose): print('  loss function generated, took %d ms' % get_tock(tick))
 
         # Generate backward pass
+        tick = get_tick()
         gW = self.backward_pass(L)
+        if (self._verbose): print('  backward pass generated, took %d ms' % get_tock(tick))
 
         #
         # Setup functions
         #
+        tick = get_tick()
         self._train = theano.function(
             inputs=[self._input, self._target],
             outputs=[L],
@@ -102,6 +121,7 @@ class OptimizerAbstraction():
             inputs=[self._input],
             outputs=[y]
         )
+        if (self._verbose): print('  compiled functions, took %d ms' % get_tock(tick))
 
     def train(self, *args):
         return list(self._train(*args))[0]

@@ -93,24 +93,24 @@ class DecoderOptimizer(Decoder, OptimizerAbstraction):
         # Use the hidden input as the cell input too
         # TODO: consider normalizing the input
         s_enc = b_enc
-        return Decoder.forward_pass(s_enc, b_enc)
+        return Decoder.forward_pass(self, s_enc, b_enc)
 
-    def _loss_scanner(self, *args, **kwargs):
-        return SutskeverNetwork._loss_scanner(self, *args, **kwargs)
+    def _preloss_scanner(self, *args, **kwargs):
+        return SutskeverNetwork._preloss_scanner(self, *args, **kwargs)
 
-    def _loss(self, *args, **kwargs):
-        return SutskeverNetwork._loss(self, *args, **kwargs)
+    def _preloss(self, *args, **kwargs):
+        return SutskeverNetwork._preloss(self, *args, **kwargs)
 
 def _test_sutskever_decoder_train():
     theano.config.compute_test_value = 'off'
 
-    decoder = DecoderOptimizer(eta=0.001, momentum=0.01)
+    decoder = DecoderOptimizer(eta=0.001, momentum=0.01, verbose=True)
     # Setup theano tap.test_value
     decoder.test_value(*count_decoder_sequence(10))
 
     # Setup layers for a logistic classifier model
     decoder.set_input(neural.layer.Input(11))  # Should match output
-    decoder.push_layer(neural.layer.LSTM(2, bias=True))  # Should match b_enc input
+    decoder.push_layer(neural.layer.LSTM(1, bias=True))  # Should match b_enc input
     decoder.push_layer(neural.layer.LSTM(22, bias=True))
     decoder.push_layer(neural.layer.LSTM(22, bias=True))
     decoder.push_layer(neural.layer.Softmax(11, bias=True))
@@ -124,7 +124,7 @@ def _test_sutskever_decoder_train():
     test.classifier(
         decoder, count_decoder_sequence,
         y_shape=(100, 4, 5), performance=0.6, plot=True, asserts=False,
-        epochs=1500
+        epochs=100
     )
 
     (b_enc, t) = count_decoder_sequence(10)

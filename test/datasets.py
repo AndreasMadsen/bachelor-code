@@ -71,12 +71,11 @@ def mode_encoder_sequence(items, Tmin=17, Tmax=20):
 
 def count_decoder_sequence(items, T=20):
     # Create initial value
-    X = np.random.uniform(0, 10, size=(items, 2))
-    X_sub = X[:, 1][:, np.newaxis]
+    X = np.random.uniform(0, 10, size=(items, 1))
 
     # Create targe by incrementing
     inc = np.tile(np.arange(0, 8), (items, 1))
-    t = np.mod(X_sub + inc, 10)
+    t = np.mod(X + inc, 10)
     t = np.floor(t)
 
     # add <EOS>
