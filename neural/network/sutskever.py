@@ -80,8 +80,8 @@ class SutskeverNetwork(OptimizerAbstraction):
 
     def _preloss(self, eosi, y, t):
         # Create an <EOS> collum vector
-        y_pad = T.zeros((y.shape[1], ))
-        y_pad = T.set_subtensor(y_pad[0], 1)
+        y_pad = T.ones((y.shape[1], )) * (0.01 / y.shape[1])
+        y_pad = T.set_subtensor(y_pad[0], 0.99)
         y_pad = y_pad.dimshuffle((0, 'x'))
 
         (y_pad, t_pad), _ = theano.scan(
