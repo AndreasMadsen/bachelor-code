@@ -61,7 +61,6 @@ class SutskeverNetwork(OptimizerAbstraction):
         tend = T.argmin(t_i) + 1
 
         # Create a new y sequence with T elements
-        fill_size = T.max([0, tend - yend])
         y2_i = T.zeros((dims, time), dtype='float32')
         # Keep the actual y elements
         y2_i = T.set_subtensor(y2_i[:, :yend], y_i[:, :yend])
@@ -80,8 +79,8 @@ class SutskeverNetwork(OptimizerAbstraction):
 
     def _preloss(self, eosi, y, t):
         # Create an <EOS> collum vector
-        y_pad = T.ones((y.shape[1], )) * (0.01 / y.shape[1])
-        y_pad = T.set_subtensor(y_pad[0], 0.99)
+        y_pad = T.ones((y.shape[1], ), dtype='float32') * (0.01 / y.shape[1])
+        y_pad = T.set_subtensor(y_pad[0], T.constant(0.99, dtype='float32'))
         y_pad = y_pad.dimshuffle((0, 'x'))
 
         (y_pad, t_pad), _ = theano.scan(
