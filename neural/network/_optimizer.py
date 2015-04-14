@@ -113,15 +113,19 @@ class OptimizerAbstraction():
             outputs=[L],
             updates=self._update_functions(gW)
         )
+        if (self._verbose): print('  compiled train function, took %d ms' % get_tock(tick))
+        tick = get_tick()
         self._test = theano.function(
             inputs=[self._input, self._target],
             outputs=[L]
         )
+        if (self._verbose): print('  compiled error function, took %d ms' % get_tock(tick))
+        tick = get_tick()
         self._predict = theano.function(
             inputs=[self._input],
             outputs=[y]
         )
-        if (self._verbose): print('  compiled functions, took %d ms' % get_tock(tick))
+        if (self._verbose): print('  compiled predict function, took %d ms' % get_tock(tick))
 
     def train(self, *args):
         return list(self._train(*args))[0]
