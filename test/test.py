@@ -34,7 +34,7 @@ if (not is_optimize and not is_HPC):
     theano.config.warn_float64 = 'warn'
     theano.config.linker = 'py'
     theano.config.exception_verbosity = 'high'
-if (theano.config.optimizer != 'fast_run'):
+if (theano.config.optimizer != 'None'):
     print('Theano optimizer enabled')
 
 def classifier(model, generator, y_shape, performance, epochs=100, asserts=True, plot=False):
