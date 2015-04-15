@@ -31,7 +31,6 @@ if (not is_HPC):
     theano.config.compute_test_value = 'warn'
 if (not is_optimize and not is_HPC):
     theano.config.optimizer = 'None'
-    theano.config.warn_float64 = 'warn'
     theano.config.linker = 'py'
     theano.config.exception_verbosity = 'high'
 if (theano.config.optimizer != 'None'):

@@ -82,7 +82,7 @@ def count_decoder_sequence(items, T=20):
     t = t + 1
     t = np.hstack([t, np.zeros((items, 1))])
 
-    return (X.astype('float32'), t.astype('int32'))
+    return ((X / 10).astype('float32'), t.astype('int32'))
 
 def subset_vocal_sequence(items, Tmin=17, Tmax=20):
     """
