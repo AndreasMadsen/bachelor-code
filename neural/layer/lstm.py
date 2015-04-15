@@ -76,7 +76,7 @@ class LSTM(LayerAbstract):
 
         # Calculate state and block output
         s_c1_t = b_ɸ1_t * s_c1_tm1 + b_ρ1_t * b_i1_t
-        b_h1_t = b_ω1_t * T.nnet.sigmoid(s_c1_t)
+        b_h1_t = b_ω1_t * s_c1_t
 
         # If mask value is 1, return the results from previous iteration
         # TODO: todo consider a more efficent way of doing this
