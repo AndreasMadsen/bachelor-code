@@ -138,7 +138,7 @@ class Encoder(BaseAbstraction):
         # to the next layer. The layer can have additional paramers, if
         # taps where provided using the `outputs_info` property.
         for layer in self._layers[1:]:
-            taps = self._infer_taps(layer)
+            taps = layer.infer_taps()
             layer_outputs = layer.scanner(prev_output, *args[curr:curr + taps], mask=mask)
 
             curr += taps
@@ -205,7 +205,7 @@ class Decoder(BaseAbstraction):
         # to the next layer. The layer can have additional paramers, if
         # taps where provided using the `outputs_info` property.
         for layer in self._layers[1:]:
-            taps = self._infer_taps(layer)
+            taps = layer.infer_taps()
             # It can be assumed that the last value in `layer_outputs` is the
             # actual layer output. The tuple may contain other values, such
             # as the current cell state. They won't be send to the next layer.

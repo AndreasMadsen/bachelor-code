@@ -3,12 +3,13 @@ import numpy as np
 import theano
 import theano.tensor as T
 
-class LSTM:
-    def __init__(self, size, bias=True):
+from neural.layer._abstract import LayerAbstract
+
+class LSTM(LayerAbstract):
+    def __init__(self, size, bias=True, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self._use_bias = bias
         self.output_size = size
-        self.weights = []
-        self.outputs_info = []
 
         self._splits = [
             i * self.output_size for i in range(0, 5)

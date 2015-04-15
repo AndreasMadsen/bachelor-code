@@ -3,12 +3,13 @@ import numpy as np
 import theano
 import theano.tensor as T
 
-class Softmax:
-    def __init__(self, size, bias=True):
+from neural.layer._abstract import LayerAbstract
+
+class Softmax(LayerAbstract):
+    def __init__(self, size, bias=True, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self._use_bias = bias
         self.output_size = size
-        self.weights = []
-        self.outputs_info = []
 
     def setup(self, batch_size, layer_index, prev_layer):
         self.layer_index = layer_index
