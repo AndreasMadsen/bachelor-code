@@ -8,6 +8,9 @@ import theano.tensor as T
 
 import neural
 
+e_0 = 0.00333333
+e_1 = 0.99
+
 def test_sutskever_preloss_yat():
     # S(P) = S(T) = L(P,T)
     y_1 = np.asarray([
@@ -70,9 +73,9 @@ def test_sutskever_preloss_yat():
         [0.8, 0.3, 0.3, 0.2]
     ]))
     assert(np.allclose(y_pad[1, :, :].tag.test_value, [
-        [0.6, 1.0, 1.0, 1.0],
-        [0.2, 0.0, 0.0, 0.0],
-        [0.2, 0.0, 0.0, 0.0]
+        [0.6, e_1, e_1, e_1],
+        [0.2, e_0, e_0, e_0],
+        [0.2, e_0, e_0, e_0]
     ]))
     assert(np.allclose(y_pad[2, :, :].tag.test_value, [
         [0.2, 0.2, 0.1, 0.8],
@@ -136,9 +139,9 @@ def test_sutskever_preloss_yget():
         [0.8, 0.3, 0.3, 0.4, 0.2]
     ]))
     assert(np.allclose(y_pad[1, :, :].tag.test_value, [
-        [0.6, 1.0, 1.0, 1.0, 1.0],
-        [0.2, 0.0, 0.0, 0.0, 0.0],
-        [0.2, 0.0, 0.0, 0.0, 0.0]
+        [0.6, e_1, e_1, e_1, e_1],
+        [0.2, e_0, e_0, e_0, e_0],
+        [0.2, e_0, e_0, e_0, e_0]
     ]))
 
     assert(np.allclose(t_pad.tag.test_value, [
@@ -185,14 +188,14 @@ def test_sutskever_preloss_ylet():
 
     # Assert
     assert(np.allclose(y_pad[0, :, :].tag.test_value, [
-        [0.1, 0.1, 0.7, 1.0],
-        [0.1, 0.6, 0.1, 0.0],
-        [0.8, 0.3, 0.2, 0.0]
+        [0.1, 0.1, 0.7, e_1],
+        [0.1, 0.6, 0.1, e_0],
+        [0.8, 0.3, 0.2, e_0]
     ]))
     assert(np.allclose(y_pad[1, :, :].tag.test_value, [
-        [0.6, 1.0, 1.0, 1.0],
-        [0.2, 0.0, 0.0, 0.0],
-        [0.2, 0.0, 0.0, 0.0]
+        [0.6, e_1, e_1, e_1],
+        [0.2, e_0, e_0, e_0],
+        [0.2, e_0, e_0, e_0]
     ]))
 
     assert(np.allclose(t_pad.tag.test_value, [
