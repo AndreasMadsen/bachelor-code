@@ -59,21 +59,6 @@ class OptimizerAbstraction():
     def _preloss(self, y, t):
         return (y, t)
 
-    def _build_forward_graph(self):
-        forward = self.forward_pass(self._input)
-        if (not isinstance(forward, tuple) and not isinstance(forward, list)):
-            forward = [forward]
-        return forward
-
-    def _build_loss_graph(self, forward):
-        return self._loss_layer.loss(
-            *self._preloss(*forward, t=self._target)
-        )
-
-    def loss_graph(self):
-        forward = self._build_forward_graph()
-        return self._build_loss_graph(forward)
-
     def compile(self):
         """
         Takes the defined layers and compiles train, error and predict functions.
@@ -90,13 +75,16 @@ class OptimizerAbstraction():
 
         # Create forward pass equations
         tick = get_tick()
-        forward = self._build_forward_graph()
+        forward = self.forward_pass(self._input)
+        if (isinstance(forward, T.TensorVariable)): forward = [forward]
         y = forward[-1]
         if (self._verbose): print('  forward pass generated, took %d ms' % get_tock(tick))
 
         # Setup loss function
         tick = get_tick()
-        L = self._build_loss_graph(forward)
+        L = self._loss_layer.loss(
+            *self._preloss(*forward, t=self._target)
+        )
         if (self._verbose): print('  loss function generated, took %d ms' % get_tock(tick))
 
         # Generate backward pass
