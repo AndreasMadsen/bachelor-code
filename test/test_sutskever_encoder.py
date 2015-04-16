@@ -61,13 +61,13 @@ def test_sutskever_encoder_fast():
     assert_equal(b_enc.tag.test_value.shape, (2, 4))
 
     assert(np.allclose(s_enc.tag.test_value, [
-        [1.54302049, 0.19040981, 0.46381277, 0.64930063],
-        [2.52043080, 0.17858852, 0.67638946, 0.93438488]
+        [1.75992775, 0.16468449, 0.47424576, 0.59295964],
+        [3.56025982, 0.03904305, 1.34779572, 1.18748903]
     ]))
 
     assert(np.allclose(b_enc.tag.test_value, [
-        [0.68185270, 0.16576755, 0.39093050, 0.48691007],
-        [0.80372810, 0.15667477, 0.45946684, 0.55524415]
+        [1.58437216, 0.04333938, 0.31211659, 0.42492560],
+        [3.54513669, 0.00469692, 1.24734366, 1.04889858]
     ]))
 
 class EncoderOptimizer(Encoder, OptimizerAbstraction):
@@ -88,7 +88,7 @@ class EncoderOptimizer(Encoder, OptimizerAbstraction):
         self._target.tag.test_value = b_enc
 
 def test_sutskever_encoder_train():
-    encoder = EncoderOptimizer()
+    encoder = EncoderOptimizer(eta=0.05, momentum=0.2)
     # Setup theano tap.test_value
     encoder.test_value(*mode_encoder_sequence(10))
 
@@ -106,7 +106,7 @@ def test_sutskever_encoder_train():
     test.classifier(
         encoder, mode_encoder_sequence,
         y_shape=(100, 10), performance=0.8,
-        epochs=1000
+        epochs=850
     )
 
     (x, t) = mode_encoder_sequence(10)
