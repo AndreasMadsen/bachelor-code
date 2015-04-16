@@ -104,16 +104,15 @@ class DecoderOptimizer(Decoder, OptimizerAbstraction):
 def _test_sutskever_decoder_train():
     theano.config.compute_test_value = 'off'
 
-    decoder = DecoderOptimizer(eta=0.001, momentum=0.01, verbose=True)
+    decoder = DecoderOptimizer(eta=0.2, momentum=0.3, verbose=True)
     # Setup theano tap.test_value
     decoder.test_value(*count_decoder_sequence(10))
 
     # Setup layers for a logistic classifier model
-    decoder.set_input(neural.layer.Input(11))  # Should match output
+    decoder.set_input(neural.layer.Input(6))  # Should match output
     decoder.push_layer(neural.layer.LSTM(1, bias=True))  # Should match b_enc input
-    decoder.push_layer(neural.layer.LSTM(22, bias=True))
-    decoder.push_layer(neural.layer.LSTM(22, bias=True))
-    decoder.push_layer(neural.layer.Softmax(11, bias=True))
+    decoder.push_layer(neural.layer.LSTM(80, bias=True))
+    decoder.push_layer(neural.layer.Softmax(6, bias=True))
 
     # Setup loss function
     decoder.set_loss(neural.loss.NaiveEntropy())
@@ -124,7 +123,7 @@ def _test_sutskever_decoder_train():
     test.classifier(
         decoder, count_decoder_sequence,
         y_shape=(100, 4, 5), performance=0.6, plot=True, asserts=False,
-        epochs=100
+        epochs=10
     )
 
     (b_enc, t) = count_decoder_sequence(10)
