@@ -69,20 +69,20 @@ def mode_encoder_sequence(items, Tmin=17, Tmax=20):
 
     return (_index_to_indicator(X, 10), t)
 
-def count_decoder_sequence(items, T=20):
+def count_decoder_sequence(items, T=8, classes=5):
     # Create initial value
-    X = np.random.uniform(0, 10, size=(items, 1))
+    X = np.random.uniform(0, classes, size=(items, 1))
 
     # Create targe by incrementing
-    inc = np.tile(np.arange(0, 8), (items, 1))
-    t = np.mod(X + inc, 10)
+    inc = np.tile(np.arange(0, T), (items, 1))
+    t = np.mod(X + inc, classes)
     t = np.floor(t)
 
     # add <EOS>
     t = t + 1
     t = np.hstack([t, np.zeros((items, 1))])
 
-    return ((X / 10).astype('float32'), t.astype('int32'))
+    return ((X / classes).astype('float32'), t.astype('int32'))
 
 def subset_vocal_sequence(items, Tmin=17, Tmax=20):
     """
