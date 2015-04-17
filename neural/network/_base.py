@@ -19,6 +19,7 @@ class BaseAbstraction:
         """
         layer.setup(self._input.shape[0], len(self._layers), self._layers[-1])
         self._layers.append(layer)
+        self._output_layer = layer
 
     def weight_list(self):
         """

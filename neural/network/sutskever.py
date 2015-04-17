@@ -40,6 +40,7 @@ class SutskeverNetwork(OptimizerAbstraction):
 
     def push_decoder_layer(self, layer):
         self._decoder.push_layer(layer)
+        self._output_layer = layer
 
     def weight_list(self):
         """

@@ -3,6 +3,8 @@ import test
 from nose.tools import *
 
 import numpy as np
+import theano
+import theano.tensor as T
 import neural
 
 def test_naive_entropy_log():
@@ -20,12 +22,14 @@ def test_naive_entropy_log():
         [0.49485490, 0.49485490, 0.00122662, 0.00906358],
         [0.49485490, 0.49485490, 0.00122662, 0.00906358]
     ], dtype='float32')
-    t2 = np.asarray([2, 1, 0], dtype='int32')
+    t2 = np.asarray([2, 1, 3], dtype='int32')
 
-    t = np.column_stack([t1.T, t2.T])
-    y = np.log(np.dstack([y1, y2]))
+    t = T.imatrix('t')
+    t.tag.test_value = np.column_stack([t1, t2])
+    y = T.tensor3('y')
+    y.tag.test_value = np.log(np.dstack([y1, y2]))
 
-    assert_equal(entropy.loss(y, t).eval(), 2.4401886463165283)
+    assert_equal(entropy.loss(y, t).tag.test_value, 3.1068553924560547)
 
 def test_naive_entropy():
     entropy = neural.loss.NaiveEntropy()
@@ -42,11 +46,11 @@ def test_naive_entropy():
         [0.49485490, 0.49485490, 0.00122662, 0.00906358],
         [0.49485490, 0.49485490, 0.00122662, 0.00906358]
     ], dtype='float32')
-    t2 = np.asarray([2, 1, 0], dtype='int32')
+    t2 = np.asarray([2, 1, 3], dtype='int32')
 
-    t = np.column_stack([t1.T, t2.T])
-    y = np.dstack([y1, y2])
+    t = T.imatrix('t')
+    t.tag.test_value = np.column_stack([t1, t2])
+    y = T.tensor3('y')
+    y.tag.test_value = np.dstack([y1, y2])
 
-    assert_equal(entropy.loss(y, t).eval(), 2.4401886463165283)
-
-test_naive_entropy()
+    assert_equal(entropy.loss(y, t).tag.test_value, 3.1068553924560547)
