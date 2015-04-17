@@ -5,6 +5,58 @@ from nose.tools import *
 import numpy as np
 import neural
 
+def test_softmax_log_bias():
+    softmax = neural.layer.Softmax(4, log=True)
+    softmax.setup(2, 1, neural.layer.Input(3))
+
+    assert_equal(len(softmax.weights), 2)
+    assert_equal(softmax.weights[0].get_value().shape, (3, 4))
+    assert_equal(softmax.weights[1].get_value().shape, (4,))
+
+    softmax.weights[0].set_value(np.asarray([
+        [1, 1, 1, 1],
+        [2, 2, 0, 0],
+        [1, 1, 0, 1],
+    ], dtype='float32'))
+
+    softmax.weights[1].set_value(np.asarray([-1, 1, 0, 0], dtype='float32'))
+
+    (y_log, y) = softmax.scanner([
+        [1, 1, 1],
+        [2, 2, 2]
+    ])
+
+    assert(np.allclose(y_log.eval(), np.log(y.eval())))
+    assert(np.allclose(y.eval(), [
+        [0.11245721, 0.83095266, 0.01521942, 0.04137069],
+        [0.11840511, 0.87490203, 0.00079780, 0.00589504]
+    ]))
+test_softmax_log_bias()
+
+def test_softmax_log_nobias():
+    softmax = neural.layer.Softmax(4, log=True, bias=False)
+    softmax.setup(2, 1, neural.layer.Input(3))
+
+    assert_equal(len(softmax.weights), 1)
+    assert_equal(softmax.weights[0].get_value().shape, (3, 4))
+
+    softmax.weights[0].set_value(np.asarray([
+        [1, 1, 1, 1],
+        [2, 2, 0, 0],
+        [1, 1, 0, 1],
+    ], dtype='float32'))
+
+    (y_log, y) = softmax.scanner([
+        [1, 1, 1],
+        [2, 2, 2]
+    ])
+
+    assert(np.allclose(y_log.eval(), np.log(y.eval())))
+    assert(np.allclose(y.eval(), [
+        [0.45764028, 0.45764028, 0.02278457, 0.06193488],
+        [0.49485490, 0.49485490, 0.00122662, 0.00906358]
+    ]))
+
 def test_softmax_bias():
     softmax = neural.layer.Softmax(4)
     softmax.setup(2, 1, neural.layer.Input(3))
