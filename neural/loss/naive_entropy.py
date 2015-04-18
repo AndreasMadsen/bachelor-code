@@ -6,7 +6,7 @@ import theano.tensor as T
 class NaiveEntropy:
     def __init__(self, time=True, log=False):
         self._time = time
-        self._is_log = log
+        self._expect_log = log
         pass
 
     def setup(self, batch_size):
@@ -19,7 +19,7 @@ class NaiveEntropy:
             t = t.ravel()
             y = y.transpose(0, 2, 1).reshape((y.shape[2] * y.shape[0], y.shape[1]))
 
-        if (self._is_log):
+        if (self._expect_log):
             # y is acutally log(y), likely calculated by Softmax(log=True)
             return - T.mean(y[T.arange(0, y.shape[0]), t])
         else:

@@ -108,6 +108,3 @@ def test_sutskever_encoder_train():
         y_shape=(100, 10), performance=0.8,
         epochs=850
     )
-
-    (x, t) = mode_encoder_sequence(10)
-    b_enc = encoder.predict(x)

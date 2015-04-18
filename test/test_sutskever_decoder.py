@@ -26,7 +26,7 @@ def test_sutskever_decoder_fast():
     # Setup layers for a logistic classifier model
     decoder.set_input(neural.layer.Input(3))
     decoder.push_layer(neural.layer.RNN(4))
-    decoder.push_layer(neural.layer.Softmax(3))
+    decoder.push_layer(neural.layer.Softmax(3, log=True))
 
     # Enforce weights for consistent results
     weights = decoder.weight_list()
@@ -51,7 +51,7 @@ def test_sutskever_decoder_fast():
     ], dtype='float32'))
 
     # Perform forward pass
-    (eois, y) = decoder.forward_pass(None, b_input)
+    (eois, log_y, y) = decoder.forward_pass(None, b_input)
 
     # Check that the gradient can be calculated
     # TODO: debug errors caused by test_value
@@ -61,7 +61,9 @@ def test_sutskever_decoder_fast():
     assert_equal(y.tag.test_value.shape, (2, 3, 2))
 
     # The first sequences ends after 1 iteration
+    log_y0 = log_y[:, :, 0]
     y0 = y[:, :, 0]
+    assert(np.allclose(log_y0.tag.test_value, np.log(y0.tag.test_value)))
     assert(np.allclose(y0.tag.test_value, [
         [0.71534252, 0.11405356, 0.17060389],
         [0.34762833, 0.23523150, 0.41714019]
@@ -69,13 +71,14 @@ def test_sutskever_decoder_fast():
     assert_equal(eois[0].tag.test_value, 0)
 
     # The second sequence ends after 2 iterations
+    log_y1 = log_y[:, :, 1]
     y1 = y[:, :, 1]
+    assert(np.allclose(log_y1.tag.test_value, np.log(y1.tag.test_value)))
     assert(np.allclose(y1.tag.test_value, [
         [0.71534252, 0.11405356, 0.17060389],
         [0.69669789, 0.09191318, 0.21138890]
     ]))
     assert_equal(eois[1].tag.test_value, 1)
-
 
 class DecoderOptimizer(Decoder, OptimizerAbstraction):
     def __init__(self, **kwargs):
@@ -104,7 +107,7 @@ class DecoderOptimizer(Decoder, OptimizerAbstraction):
 def _test_sutskever_decoder_train():
     theano.config.compute_test_value = 'off'
 
-    decoder = DecoderOptimizer(eta=0.2, momentum=0.3, verbose=True)
+    decoder = DecoderOptimizer(eta=0.2, momentum=0.3, maxlength=9, verbose=True)
     # Setup theano tap.test_value
     decoder.test_value(*count_decoder_sequence(10))
 
@@ -112,10 +115,10 @@ def _test_sutskever_decoder_train():
     decoder.set_input(neural.layer.Input(6))  # Should match output
     decoder.push_layer(neural.layer.LSTM(1, bias=True))  # Should match b_enc input
     decoder.push_layer(neural.layer.LSTM(80, bias=True))
-    decoder.push_layer(neural.layer.Softmax(6, bias=True))
+    decoder.push_layer(neural.layer.Softmax(6, bias=True, log=True))
 
     # Setup loss function
-    decoder.set_loss(neural.loss.NaiveEntropy())
+    decoder.set_loss(neural.loss.NaiveEntropy(log=True))
 
     # Compile train, test and predict functions
     decoder.compile()

@@ -50,16 +50,17 @@ class SutskeverNetwork(OptimizerAbstraction):
 
     def forward_pass(self, x):
         (s_enc, b_enc) = self._encoder.forward_pass(x)
-        (eois, y) = self._decoder.forward_pass(s_enc, b_enc)
+        (eois, log_y, y) = self._decoder.forward_pass(s_enc, b_enc)
 
-        return (eois, y)
+        return (eois, log_y, y)
 
     def _preloss_scanner(self, y_i, eosi_i, t_i, y_pad, dims, time):
         # Get length of y seqence including the first <EOS>
         yend = eosi_i + 1
 
-        # Get length of t seqence including the first <EOS>
-        tend = T.argmin(t_i) + 1
+        # Since t is already padded with <EOS>, we can just copy the
+        # entire sequence.
+        tend = t_i.shape[0]
 
         # Create a new y sequence with T elements
         y2_i = T.zeros((dims, time), dtype='float32')
@@ -71,23 +72,23 @@ class SutskeverNetwork(OptimizerAbstraction):
         # Createa a new t seqnece with T elements
         t2_i = T.zeros((time, ), dtype='int32')
         # Keep the actual t elements
-        t2_i = T.set_subtensor(t2_i[:tend], t_i[:tend])
+        t2_i = T.set_subtensor(t2_i[:tend], t_i)
         # Add <EOS> padding to t2 for the remaining elments,
         # the y2 padding will ignore this
         # -- No code, since 0 from T.zeros is <EOS>
 
         return [y2_i, t2_i]
 
-    def _preloss(self, eosi, y, t):
+    def _preloss(self, eosi, log_y, y, t):
         # Create an <EOS> collum vector
         y_pad = T.ones((y.shape[1], ), dtype='float32')
-        y_pad = y_pad * (0.01 / T.cast(y.shape[1], 'float32'))
-        y_pad = T.set_subtensor(y_pad[0], 0.99)
+        y_pad = y_pad * T.log(0.01 / T.cast(y.shape[1], 'float32'))
+        y_pad = T.set_subtensor(y_pad[0], T.log(0.99))
         y_pad = y_pad.dimshuffle((0, 'x'))
 
-        (y_pad, t_pad), _ = theano.scan(
+        (log_y_pad, t_pad), _ = theano.scan(
             fn=self._preloss_scanner,
-            sequences=[y, eosi, t],
+            sequences=[log_y, eosi, t],
             outputs_info=[None, None],
             non_sequences=[
                 y_pad,
@@ -97,9 +98,12 @@ class SutskeverNetwork(OptimizerAbstraction):
             name='sutskever_loss'
         )
 
-        return (y_pad, t_pad)
+        return (log_y_pad, t_pad)
 
     def compile(self):
+        # Sutskever is numerically unstable unless stable prelog is used
+        assert(self._output_layer._add_log)
+
         # The input decoder much match its softmax output
         assert(self._decoder._layers[+0].output_size == self._decoder._layers[-1].output_size)
         # The hidden encoder output much match the hidden decoder intialization
@@ -287,6 +291,7 @@ class Decoder(BaseAbstraction):
         eosi = outputs[0][-1, :]
 
         # The scan output have the shape (time, dims, observations)
+        log_y = outputs[-2].transpose(1, 2, 0)
         y = outputs[-1].transpose(1, 2, 0)
 
-        return (eosi, y)
+        return (eosi, log_y, y)
