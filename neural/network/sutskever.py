@@ -31,12 +31,14 @@ class SutskeverNetwork(OptimizerAbstraction):
         self._input.tag.test_value = x
         self._target.tag.test_value = t
 
-    def set_input(self, layer):
+    def set_encoder_input(self, layer):
         self._encoder.set_input(layer)
-        self._decoder.set_input(layer)
 
     def push_encoder_layer(self, layer):
         self._encoder.push_layer(layer)
+
+    def set_decoder_input(self, layer):
+        self._decoder.set_input(layer)
 
     def push_decoder_layer(self, layer):
         self._decoder.push_layer(layer)
