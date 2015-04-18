@@ -107,7 +107,7 @@ class DecoderOptimizer(Decoder, OptimizerAbstraction):
 def _test_sutskever_decoder_train():
     theano.config.compute_test_value = 'off'
 
-    decoder = DecoderOptimizer(eta=0.2, momentum=0.3, maxlength=9, verbose=True)
+    decoder = DecoderOptimizer(eta=0.2, momentum=0.3, maxlength=15, verbose=True)
     # Setup theano tap.test_value
     decoder.test_value(*count_decoder_sequence(10))
 
@@ -125,8 +125,8 @@ def _test_sutskever_decoder_train():
 
     test.classifier(
         decoder, count_decoder_sequence,
-        y_shape=(100, 4, 5), performance=0.6, plot=True, asserts=False,
-        epochs=10
+        y_shape=(100, 6, 9), performance=0.8, plot=True, asserts=False,
+        epochs=1000
     )
 
     (b_enc, t) = count_decoder_sequence(10)
