@@ -62,19 +62,21 @@ class SutskeverNetwork(OptimizerAbstraction):
 
         # Since t is already padded with <EOS>, we can just copy the
         # entire sequence.
-        tend = t_i.shape[0]
+        tend = T.argmin(t_i) + 1
 
         # Create a new y sequence with T elements
         y2_i = T.zeros((dims, time), dtype='float32')
         # Keep the actual y elements
         y2_i = T.set_subtensor(y2_i[:, :yend], y_i[:, :yend])
+        # Add <EOS> padding to y2 for the remaining elments
+        y2_i = T.set_subtensor(y2_i[:, yend:tend], y_pad)
         # Add ignore padding to y2 for the remaining elments
-        y2_i = T.set_subtensor(y2_i[:, yend:], y_pad)
+        y2_i = T.set_subtensor(y2_i[:, T.max([yend, tend]):], 0.0)
 
         # Createa a new t seqnece with T elements
         t2_i = T.zeros((time, ), dtype='int32')
         # Keep the actual t elements
-        t2_i = T.set_subtensor(t2_i[:tend], t_i)
+        t2_i = T.set_subtensor(t2_i[:tend], t_i[:tend])
         # Add <EOS> padding to t2 for the remaining elments,
         # the y2 padding will ignore this
         # -- No code, since 0 from T.zeros is <EOS>

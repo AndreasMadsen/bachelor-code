@@ -73,9 +73,9 @@ def test_sutskever_preloss_yat():
         [0.8, 0.3, 0.3, 0.2]
     ])))
     assert(np.allclose(log_y_pad[1, :, :].tag.test_value, np.log([
-        [0.6, e_1, e_1, e_1],
-        [0.2, e_0, e_0, e_0],
-        [0.2, e_0, e_0, e_0]
+        [0.6, e_1, 1.0, 1.0],
+        [0.2, e_0, 1.0, 1.0],
+        [0.2, e_0, 1.0, 1.0]
     ])))
     assert(np.allclose(log_y_pad[2, :, :].tag.test_value, np.log([
         [0.2, 0.2, 0.1, 0.8],
@@ -139,9 +139,9 @@ def test_sutskever_preloss_yget():
         [0.8, 0.3, 0.3, 0.4, 0.2]
     ])))
     assert(np.allclose(log_y_pad[1, :, :].tag.test_value, np.log([
-        [0.6, e_1, e_1, e_1, e_1],
-        [0.2, e_0, e_0, e_0, e_0],
-        [0.2, e_0, e_0, e_0, e_0]
+        [0.6, e_1, 1.0, 1.0, 1.0],
+        [0.2, e_0, 1.0, 1.0, 1.0],
+        [0.2, e_0, 1.0, 1.0, 1.0]
     ])))
 
     assert(np.allclose(t_pad.tag.test_value, [
@@ -193,9 +193,9 @@ def test_sutskever_preloss_ylet():
         [0.8, 0.3, 0.2, e_0]
     ])))
     assert(np.allclose(log_y_pad[1, :, :].tag.test_value, np.log([
-        [0.6, e_1, e_1, e_1],
-        [0.2, e_0, e_0, e_0],
-        [0.2, e_0, e_0, e_0]
+        [0.6, e_1, 1.0, 1.0],
+        [0.2, e_0, 1.0, 1.0],
+        [0.2, e_0, 1.0, 1.0]
     ])))
 
     assert(np.allclose(t_pad.tag.test_value, [
