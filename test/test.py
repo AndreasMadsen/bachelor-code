@@ -12,6 +12,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import theano
 
+np.random.seed(42)
+
 warnings.filterwarnings(
     action='error',
     category=UserWarning
