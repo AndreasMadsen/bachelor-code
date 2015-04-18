@@ -56,51 +56,11 @@ class SutskeverNetwork(OptimizerAbstraction):
 
         return (eois, log_y, y)
 
-    def _preloss_scanner(self, y_i, eosi_i, t_i, y_pad, dims, time):
-        # Get length of y seqence including the first <EOS>
-        yend = eosi_i + 1
-
-        # Since t is already padded with <EOS>, we can just copy the
-        # entire sequence.
-        tend = t_i.shape[0]
-
-        # Create a new y sequence with T elements
-        y2_i = T.zeros((dims, time), dtype='float32')
-        # Keep the actual y elements
-        y2_i = T.set_subtensor(y2_i[:, :yend], y_i[:, :yend])
-        # Add ignore padding to y2 for the remaining elments
-        y2_i = T.set_subtensor(y2_i[:, yend:], y_pad)
-
-        # Createa a new t seqnece with T elements
-        t2_i = T.zeros((time, ), dtype='int32')
-        # Keep the actual t elements
-        t2_i = T.set_subtensor(t2_i[:tend], t_i)
-        # Add <EOS> padding to t2 for the remaining elments,
-        # the y2 padding will ignore this
-        # -- No code, since 0 from T.zeros is <EOS>
-
-        return [y2_i, t2_i]
-
     def _preloss(self, eosi, log_y, y, t):
-        # Create an <EOS> collum vector
-        y_pad = T.ones((y.shape[1], ), dtype='float32')
-        y_pad = y_pad * T.log(0.01 / T.cast(y.shape[1], 'float32'))
-        y_pad = T.set_subtensor(y_pad[0], T.log(0.99))
-        y_pad = y_pad.dimshuffle((0, 'x'))
+        t_pad = T.zeros((y.shape[0], y.shape[2]), dtype=t.dtype)
+        t_pad = T.set_subtensor(t_pad[:, :t.shape[1]], t)
 
-        (log_y_pad, t_pad), _ = theano.scan(
-            fn=self._preloss_scanner,
-            sequences=[log_y, eosi, t],
-            outputs_info=[None, None],
-            non_sequences=[
-                y_pad,
-                y.shape[1],
-                T.max([y.shape[2], t.shape[1]])
-            ],
-            name='sutskever_loss'
-        )
-
-        return (log_y_pad, t_pad)
+        return (log_y, t_pad)
 
     def compile(self):
         # Sutskever is numerically unstable unless stable prelog is used
@@ -234,7 +194,7 @@ class Decoder(BaseAbstraction):
         all_outputs = [eosi, new_mask] + all_outputs
 
         # Stop when all sequences are masked
-        return (all_outputs, theano.scan_module.until(T.all(new_mask)))
+        return all_outputs
 
     def _outputs_info_list(self, s_enc, b_enc):
         outputs_info = super()._outputs_info_list()

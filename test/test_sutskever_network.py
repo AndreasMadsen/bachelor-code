@@ -14,7 +14,7 @@ def _test_sutskever_network_count():
     # TODO: debug errors caused by test_value
     theano.config.compute_test_value = 'off'
 
-    sutskever = neural.network.Sutskever(eta=0.2, momentum=0.3, max_output_size=9, verbose=True)
+    sutskever = neural.network.Sutskever(eta=0.2, momentum=0.3, max_output_size=15, verbose=True)
     # Setup theano tap.test_value
     sutskever.test_value(*count_network_sequence(10))
 
