@@ -92,7 +92,7 @@ def test_sutskever_encoder_train():
     # Setup theano tap.test_value
     encoder.test_value(*mode_encoder_sequence(10))
 
-    # Setup layers for a logistic classifier model
+    # Setup layers
     encoder.set_input(neural.layer.Input(10))
     encoder.push_layer(neural.layer.LSTM(15))
     encoder.push_layer(neural.layer.Softmax(10))

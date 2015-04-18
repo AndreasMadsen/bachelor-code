@@ -30,7 +30,7 @@ def test_rnn_classifier():
     # Setup theano tap.test_value
     rnn.test_value(*quadrant_cumsum_classify(10))
 
-    # Setup layers for a logistic classifier model
+    # Setup layers for a recurent classifier model
     rnn.set_input(neural.layer.Input(2))
     rnn.push_layer(neural.layer.RNN(4))
     rnn.push_layer(neural.layer.Softmax(4))
@@ -52,7 +52,7 @@ def test_lstm_classifier():
     # Setup theano tap.test_value
     lstm.test_value(*quadrant_cumsum_classify(10))
 
-    # Setup layers for a logistic classifier model
+    # Setup layers for a recurent classifier model
     lstm.set_input(neural.layer.Input(2))
     lstm.push_layer(neural.layer.LSTM(4))
     lstm.push_layer(neural.layer.Softmax(4))

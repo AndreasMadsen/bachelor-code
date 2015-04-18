@@ -23,7 +23,7 @@ def test_sutskever_decoder_fast():
     # Create encoder
     decoder = Decoder(b_input)
 
-    # Setup layers for a logistic classifier model
+    # Setup layers
     decoder.set_input(neural.layer.Input(3))
     decoder.push_layer(neural.layer.RNN(4))
     decoder.push_layer(neural.layer.Softmax(3, log=True))
@@ -111,7 +111,7 @@ def _test_sutskever_decoder_train():
     # Setup theano tap.test_value
     decoder.test_value(*count_decoder_sequence(10))
 
-    # Setup layers for a logistic classifier model
+    # Setup layers
     decoder.set_input(neural.layer.Input(6))  # Should match output
     decoder.push_layer(neural.layer.LSTM(1, bias=True))  # Should match b_enc input
     decoder.push_layer(neural.layer.LSTM(80, bias=True))
