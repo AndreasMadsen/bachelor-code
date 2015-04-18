@@ -84,6 +84,22 @@ def count_decoder_sequence(items, T=8, classes=5):
 
     return ((X / classes).astype('float32'), t.astype('int32'))
 
+def count_network_sequence(items, T=8, classes=5):
+    # Create initial value
+    X = np.random.uniform(0, classes, size=(items, 2, 1))
+    X[:, 1, 0] = 0
+
+    # Create targe by incrementing
+    inc = np.tile(np.arange(0, T), (items, 1))
+    t = np.mod(X[:, 0, 0][:, None] + inc, classes)
+    t = np.floor(t)
+
+    # add <EOS>
+    t = t + 1
+    t = np.hstack([t, np.zeros((items, 1))])
+
+    return ((X / classes).astype('float32'), t.astype('int32'))
+
 def subset_vocal_sequence(items, Tmin=17, Tmax=20):
     """
     This will generate a random input and target sequence of letters.
