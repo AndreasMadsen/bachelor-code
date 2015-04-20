@@ -24,7 +24,7 @@ class OptimizerAbstraction():
         """
         Set the loss function.
         """
-        loss.setup(self._input.shape[0])
+        loss.setup(self._inputs[0].shape[0])
         self._loss_layer = loss
 
     def backward_pass(self, L):
@@ -82,7 +82,7 @@ class OptimizerAbstraction():
 
         # Create forward pass equations
         tick = get_tick()
-        forward = self.forward_pass(self._input)
+        forward = self.forward_pass(*self._inputs)
         if (isinstance(forward, T.TensorVariable)): forward = [forward]
         y = forward[-1]
         if (self._verbose): print('  forward pass generated, took %d ms' % get_tock(tick))
@@ -104,20 +104,20 @@ class OptimizerAbstraction():
         #
         tick = get_tick()
         self._train = theano.function(
-            inputs=[self._input, self._target],
+            inputs=self._inputs + [self._target],
             outputs=[L],
             updates=self._update_functions(gW)
         )
         if (self._verbose): print('  compiled train function, took %d ms' % get_tock(tick))
         tick = get_tick()
         self._test = theano.function(
-            inputs=[self._input, self._target],
+            inputs=self._inputs + [self._target],
             outputs=[L]
         )
         if (self._verbose): print('  compiled error function, took %d ms' % get_tock(tick))
         tick = get_tick()
         self._predict = theano.function(
-            inputs=[self._input],
+            inputs=self._inputs,
             outputs=[y]
         )
         if (self._verbose): print('  compiled predict function, took %d ms' % get_tock(tick))

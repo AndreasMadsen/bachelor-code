@@ -17,7 +17,7 @@ class BaseAbstraction:
         Push a layer to the network. The order of the layers matches
         the order of the `push_layer` calls.
         """
-        layer.setup(self._input.shape[0], len(self._layers), self._layers[-1])
+        layer.setup(self._inputs[0].shape[0], len(self._layers), self._layers[-1])
         self._layers.append(layer)
         self._output_layer = layer
 

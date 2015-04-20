@@ -17,7 +17,7 @@ class StdNetwork(OptimizerAbstraction, BaseAbstraction):
         BaseAbstraction.__init__(self, **kwargs)
         OptimizerAbstraction.__init__(self, **kwargs)
 
-        self._input = T.tensor3('x')
+        self._inputs = [T.tensor3('x')]
         self._target = T.imatrix('t')
 
     def test_value(self, x, t):

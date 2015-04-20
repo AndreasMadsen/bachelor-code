@@ -14,7 +14,7 @@ def _test_sutskever_network_count():
     # TODO: debug errors caused by test_value
     theano.config.compute_test_value = 'off'
 
-    sutskever = neural.network.Sutskever(eta=0.2, momentum=0.3, max_output_size=9, verbose=True)
+    sutskever = neural.network.Sutskever(eta=0.2, momentum=0.3, max_output_size=15, verbose=True)
     # Setup theano tap.test_value
     sutskever.test_value(*count_network_sequence(10))
 
@@ -54,33 +54,33 @@ def _test_sutskever_network_filter():
     # TODO: debug errors caused by test_value
     theano.config.compute_test_value = 'off'
 
-    sutskever = neural.network.Sutskever(eta=0.1, momentum=0.9, max_output_size=10)
+    sutskever = neural.network.Sutskever(eta=0.1, momentum=0.3, max_output_size=20, verbose=True)
     # Setup theano tap.test_value
     test_value = subset_vocal_sequence(10)
     sutskever.test_value(*test_value)
 
     # Setup layers for a logistic classifier model
     letters = test_value[0].shape[1]
-    latent = 40
+    latent = 100
     sutskever.set_encoder_input(neural.layer.Input(letters))
-    sutskever.push_encoder_layer(neural.layer.LSTM(20))
+    sutskever.push_encoder_layer(neural.layer.LSTM(40))
     sutskever.push_encoder_layer(neural.layer.LSTM(latent))
 
     sutskever.set_decoder_input(neural.layer.Input(letters))
     sutskever.push_decoder_layer(neural.layer.LSTM(latent))
-    sutskever.push_decoder_layer(neural.layer.LSTM(20))
-    sutskever.push_decoder_layer(neural.layer.Softmax(letters))
+    sutskever.push_decoder_layer(neural.layer.LSTM(40))
+    sutskever.push_decoder_layer(neural.layer.Softmax(letters, log=True))
 
     # Setup loss function
-    sutskever.set_loss(neural.loss.NaiveEntropy())
+    sutskever.set_loss(neural.loss.NaiveEntropy(log=True))
 
     # Compile train, test and predict functions
     sutskever.compile()
 
     test.classifier(
         sutskever, subset_vocal_sequence,
-        y_shape=(100, 4, 5), performance=0.6, asserts=False, plot=True,
-        epochs=200
+        y_shape=(100, 4, 5), performance=0.6, asserts=False, plot=True, save=True,
+        epochs=4000
     )
 
     def mat2str(mat):

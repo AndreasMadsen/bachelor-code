@@ -81,28 +81,39 @@ def test_sutskever_decoder_fast():
     assert_equal(eois[1].tag.test_value, 1)
 
 class DecoderOptimizer(Decoder, OptimizerAbstraction):
-    def __init__(self, **kwargs):
-        self._input = T.matrix('b_enc')
+    def __init__(self, maxlength=100, **kwargs):
+        self._maxlength = maxlength
+        self._inputs = [T.matrix('b_enc'), T.ivector('eosi')]
         self._target = T.imatrix('t')
 
-        Decoder.__init__(self, self._input, **kwargs)
+        Decoder.__init__(self, self._inputs, **kwargs)
         OptimizerAbstraction.__init__(self, **kwargs)
 
-    def test_value(self, x, t):
-        self._input.tag.test_value = x
+    def test_value(self, b_enc, t):
+        self._inputs[0].tag.test_value = b_enc
+        self._inputs[1].tag.test_value = np.argmin(t, axis=1)
         self._target.tag.test_value = t
 
-    def forward_pass(self, b_enc):
+    def forward_pass(self, b_enc, eosi):
         # Use the hidden input as the cell input too
         # TODO: consider normalizing the input
         s_enc = b_enc
-        return Decoder.forward_pass(self, s_enc, b_enc)
-
-    def _preloss_scanner(self, *args, **kwargs):
-        return SutskeverNetwork._preloss_scanner(self, *args, **kwargs)
+        return Decoder.forward_pass(self, s_enc, b_enc, eosi)
 
     def _preloss(self, *args, **kwargs):
         return SutskeverNetwork._preloss(self, *args, **kwargs)
+
+    def train(self, b_enc, t):
+        eosi = np.argmin(t, axis=1).astype('int32')
+        return super().train(b_enc, eosi, t)
+
+    def test(self, b_enc, t):
+        eosi = np.argmin(t, axis=1).astype('int32')
+        return super().test(b_enc, eosi, t)
+
+    def predict(self, b_enc):
+        eosi = np.ones(b_enc.shape[0], dtype='int32') * self._maxlength
+        return super().predict(b_enc, eosi)
 
 def _test_sutskever_decoder_train():
     theano.config.compute_test_value = 'off'
@@ -126,7 +137,7 @@ def _test_sutskever_decoder_train():
     test.classifier(
         decoder, count_decoder_sequence,
         y_shape=(100, 6, 9), performance=0.8, plot=True, asserts=False,
-        epochs=1000
+        epochs=10
     )
 
     (b_enc, t) = count_decoder_sequence(10)
