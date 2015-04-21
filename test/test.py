@@ -55,7 +55,9 @@ def classifier(model, generator, y_shape, performance, epochs=100, asserts=True,
         if (plot): print('  running train epoch %d' % i)
         train_error[i] = model.train(*generator(500))
         test_error[i] = model.test(*test_dataset)
-        if (save): test_predict[i] = model.predict(test_dataset[0])
+        if (save):
+            pred = model.predict(test_dataset[0])
+            test_predict[i, :, :, :pred.shape[2]] = pred
 
     if (plot):
         plt.figure()
