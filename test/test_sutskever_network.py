@@ -35,8 +35,8 @@ def _test_sutskever_network_count():
 
     test.classifier(
         sutskever, count_network_sequence,
-        y_shape=(100, 6, 9), performance=0.6, asserts=False, plot=True,
-        epochs=10
+        y_shape=(100, 6, 15), performance=0.6, asserts=False, plot=True, save=True,
+        epochs=4000
     )
 
     (x, t) = count_network_sequence(10)

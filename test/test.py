@@ -29,6 +29,10 @@ sys.path.append(path.join(thisdir, '..'))
 is_HPC = (os.environ.get('DTU_HPC') is not None)
 is_optimize = (os.environ.get('OPTIMIZE') is not None)
 
+run_name = (os.environ.get('OUTNAME')
+            if os.environ.get('OUTNAME') is not None
+            else str(os.getpid()))
+
 if (not is_HPC):
     theano.config.compute_test_value = 'warn'
 if (not is_optimize and not is_HPC):
@@ -38,7 +42,7 @@ if (not is_optimize and not is_HPC):
 if (theano.config.optimizer != 'None'):
     print('Theano optimizer enabled')
 
-def classifier(model, generator, y_shape, performance, epochs=100, asserts=True, plot=False):
+def classifier(model, generator, y_shape, performance, epochs=100, asserts=True, plot=False, save=False):
     if (plot): print('testing classifier')
 
     # Setup dataset and train model
@@ -46,10 +50,12 @@ def classifier(model, generator, y_shape, performance, epochs=100, asserts=True,
 
     train_error = np.zeros(epochs)
     test_error = np.zeros(epochs)
+    if (save): test_predict = np.zeros((epochs, ) + y_shape)
     for i in range(0, epochs):
         if (plot): print('  running train epoch %d' % i)
         train_error[i] = model.train(*generator(500))
         test_error[i] = model.test(*test_dataset)
+        if (save): test_predict[i] = model.predict(test_dataset[0])
 
     if (plot):
         plt.figure()
@@ -72,5 +78,15 @@ def classifier(model, generator, y_shape, performance, epochs=100, asserts=True,
     misses = np.mean(np.argmax(y, axis=1) != test_dataset[1])
     if (plot): print('miss classifications:', misses)
     if (asserts): assert((1 - misses) > performance)
+
+    if (save):
+        np.savez(
+            path.join(thisdir, '..', 'outputs', run_name + '.npz'),
+            train=train_error,
+            test=test_error,
+            predict=test_predict,
+            input=test_dataset[0],
+            target=test_dataset[1]
+        )
 
 __all__ = ['classifier']
