@@ -82,7 +82,7 @@ def classifier(model, generator, y_shape, performance, epochs=100, asserts=True,
     if (asserts): assert((1 - misses) > performance)
 
     if (save):
-        np.savez(
+        np.savez_compressed(
             path.join(thisdir, '..', 'outputs', run_name + '.npz'),
             train=train_error,
             test=test_error,
