@@ -9,3 +9,4 @@ from .shape import *
 from .merge import *
 from .recurrent import *
 from .normalization import *
+from .repeat import *
