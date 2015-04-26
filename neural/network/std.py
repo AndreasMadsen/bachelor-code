@@ -36,7 +36,7 @@ class StdNetwork(OptimizerAbstraction, BaseAbstraction):
         # to the next layer. The layer can have additional paramers, if
         # taps where provided using the `outputs_info` property.
         for layer in self._layers[1:]:
-            taps = self._infer_taps(layer)
+            taps = layer.infer_taps()
             layer_outputs = layer.scanner(prev_output, *args[curr:curr + taps])
 
             curr += taps
@@ -60,10 +60,8 @@ class StdNetwork(OptimizerAbstraction, BaseAbstraction):
             outputs_info=self._outputs_info_list()
         )
         # the last output is assumed to be the network output
-        if (isinstance(outputs, list)):
-            y = outputs[-1]
-        else:
-            y = outputs
+        y = self._last_output(outputs)
+
         # transpose back to (obs, dims, time)
         y = y.transpose(1, 2, 0)
 

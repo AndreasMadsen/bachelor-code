@@ -19,6 +19,7 @@ class BaseAbstraction:
         """
         layer.setup(self._input.shape[0], len(self._layers), self._layers[-1])
         self._layers.append(layer)
+        self._output_layer = layer
 
     def weight_list(self):
         """
@@ -36,24 +37,12 @@ class BaseAbstraction:
             layer.outputs_info for layer in self._layers
         ]))
 
-    def _infer_taps(self, layer):
-        taps = 0
-
-        for info in layer.outputs_info:
-            # If info is dict it can have a taps array, default this is [-1]
-            if (isinstance(info, dict)):
-                # However of no `inital` property is provided it is treated
-                # as None (no taps)
-                if ('initial' in info):
-                    if ('taps' in info):
-                        taps += len(info.taps)
-                    else:
-                        taps += 1
-            # If info is a numpy array or a scalar
-            elif (info is not None):
-                taps += 1
-
-        return taps
+    def _last_output(self, outputs):
+        if (isinstance(outputs, list)):
+            y = outputs[-1]
+        else:
+            y = outputs
+        return y
 
     def forward_pass(self, x):
         raise NotImplemented

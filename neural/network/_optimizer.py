@@ -1,23 +1,31 @@
 
 import itertools
 
+import datetime
 import numpy as np
 import theano
 import theano.tensor as T
 
+def get_tick():
+    return datetime.datetime.now()
+
+def get_tock(tick):
+    return (datetime.datetime.now() - tick).total_seconds() * 1000
+
 class OptimizerAbstraction():
-    def __init__(self, eta=0.1, momentum=0.9, **kwargs):
+    def __init__(self, eta=0.1, momentum=0.9, verbose=False, **kwargs):
         self._eta = eta
         self._momentum = momentum
 
-        self._loss = None
+        self._verbose = verbose
+        self._loss_layer = None
 
     def set_loss(self, loss):
         """
         Set the loss function.
         """
-        loss.setup(self._input.shape[0], self._layers[-1])
-        self._loss = loss
+        loss.setup(self._input.shape[0])
+        self._loss_layer = loss
 
     def backward_pass(self, L):
         """
@@ -48,6 +56,9 @@ class OptimizerAbstraction():
             in zip(gW, self.weight_list())
         ]))
 
+    def _preloss(self, y, t):
+        return (y, t)
+
     def compile(self):
         """
         Takes the defined layers and compiles train, error and predict functions.
@@ -57,29 +68,65 @@ class OptimizerAbstraction():
         #
         # Setup equations
         #
+        if (self._verbose):
+            print('compiling network')
+            if (theano.config.optimizer != 'fast_run'):
+                print('  NOTE: optimizer is disabled')
+
+        # Check output is compatiabel with loss
+        if (self._loss_layer._expect_log != self._output_layer._add_log):
+            raise ValueError('loss layer and output layer did not agree on the log transform')
+        if (self._verbose):
+            if (not self._loss_layer._expect_log):
+                print('  NOTE: no log transform, this may be numerically unstable')
 
         # Create forward pass equations
-        y = self.forward_pass(self._input)
+        tick = get_tick()
+        forward = self.forward_pass(self._input)
+        if (isinstance(forward, T.TensorVariable)): forward = [forward]
+        y = forward[-1]
+        if (self._verbose): print('  forward pass generated, took %d ms' % get_tock(tick))
 
         # Setup loss function
-        L = self._loss.loss(y, self._target)
+        tick = get_tick()
+        L = self._loss_layer.loss(
+            *self._preloss(*forward, t=self._target)
+        )
+        if (self._verbose): print('  loss function generated, took %d ms' % get_tock(tick))
 
         # Generate backward pass
+        tick = get_tick()
         gW = self.backward_pass(L)
+        if (self._verbose): print('  backward pass generated, took %d ms' % get_tock(tick))
 
         #
         # Setup functions
         #
-        self.train = theano.function(
+        tick = get_tick()
+        self._train = theano.function(
             inputs=[self._input, self._target],
-            outputs=L,
+            outputs=[L],
             updates=self._update_functions(gW)
         )
-        self.test = theano.function(
+        if (self._verbose): print('  compiled train function, took %d ms' % get_tock(tick))
+        tick = get_tick()
+        self._test = theano.function(
             inputs=[self._input, self._target],
-            outputs=L
+            outputs=[L]
         )
-        self.predict = theano.function(
+        if (self._verbose): print('  compiled error function, took %d ms' % get_tock(tick))
+        tick = get_tick()
+        self._predict = theano.function(
             inputs=[self._input],
-            outputs=y
+            outputs=[y]
         )
+        if (self._verbose): print('  compiled predict function, took %d ms' % get_tock(tick))
+
+    def train(self, *args):
+        return list(self._train(*args))[0]
+
+    def test(self, *args):
+        return list(self._test(*args))[0]
+
+    def predict(self, *args):
+        return list(self._predict(*args))[0]
