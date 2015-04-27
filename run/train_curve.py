@@ -6,9 +6,9 @@ import os.path as path
 import neural
 import numpy as np
 
-EPOCHS = 20
+EPOCHS = 4000
 TEST_SIZE = 200
-TRAIN_SIZES = [100, 200] #, 400, 800, 1600, 3200]
+TRAIN_SIZES = [100, 200, 400, 800, 1600, 3200]
 Y_SHAPE = (TEST_SIZE, 6, 15)
 OUTNAME = os.environ.get('OUTNAME')
 
