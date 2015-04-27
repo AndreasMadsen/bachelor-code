@@ -8,7 +8,7 @@
 cd $PBS_O_WORKDIR
 
 module load python3
-modile load gcc
+module load gcc
 module load qt
 module load cuda
 
