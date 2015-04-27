@@ -264,6 +264,8 @@ class LSTMLayer(Layer):
                  backwards=False,
                  learn_init=False,
                  peepholes=True,
+                 return_sequence=True,
+                 return_cell=False,
                  gradient_steps=-1):
         '''
         Initialize an LSTM layer.  For details on what the parameters mean, see
@@ -445,6 +447,9 @@ class LSTMLayer(Layer):
         self.hid_init = self.create_param(
             hid_init, (num_batch, num_units), name="hid_init")
 
+        self.return_sequence = return_sequence
+        self.return_cell = return_cell
+
     def get_params(self):
         '''
         Get all parameters of this layer.
@@ -529,7 +534,10 @@ class LSTMLayer(Layer):
             - output_shape : tuple
                 Dimensionality of expected outputs given input_shape
         '''
-        return (input_shape[0], input_shape[1], self.num_units)
+        if (self.return_sequence):
+            return (input_shape[0], input_shape[1], self.num_units)
+        else:
+            return (input_shape[0], self.num_units)
 
     def get_output_for(self, input, mask=None, *args, **kwargs):
         '''
@@ -636,16 +644,28 @@ class LSTMLayer(Layer):
 
         # Scan op iterates over first dimension of input and repeatedly
         # applies the step function
-        output = theano.scan(step_fun, sequences=sequences,
-                             outputs_info=[self.cell_init, self.hid_init],
-                             go_backwards=self.backwards,
-                             truncate_gradient=self.gradient_steps)[0][1]
+        output_scan = theano.scan(step_fun, sequences=sequences,
+                                  outputs_info=[self.cell_init, self.hid_init],
+                                  go_backwards=self.backwards,
+                                  truncate_gradient=self.gradient_steps)[0]
 
-        # Now, dimshuffle back to (n_batch, n_time_steps, n_features))
-        output = output.dimshuffle(1, 0, 2)
+        output_hid = output_scan[1]
 
-        # if scan is backward reverse the output
-        if self.backwards:
-            output = output[:, ::-1, :]
+        # optionally only return last hidden state
+        if self.return_sequence:
+            output_hid = output_hid.dimshuffle(1, 0, 2)
+        else:
+            output_hid = output_hid[-1]
 
-        return output
+        # if returncell is true we return both cell and hidden states.
+        # This is needed for the encoder/decoder framework.
+        if self.return_cell:
+            output_cell = output_scan[0]
+
+            if self.return_sequence:
+                output_cell = output_cell.dimshuffle(1, 0, 2)
+            else:
+                output_cell = output_cell[-1]  # return last position
+            return output_cell, output_hid
+        else:
+            return output_hid

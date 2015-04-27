@@ -2,6 +2,7 @@ import theano
 import theano.tensor as T
 from .base import Layer
 
+import numpy as np
 
 __all__ = [
     "RepeatLayer"
@@ -21,13 +22,13 @@ class RepeatLayer(Layer):
 
         self.n_repeat = n_repeat
 
-        assert(len(self.input_shape) == 2,
-               "Input shape must be (batch_size, num_features")
+        assert len(self.input_shape) == 2, \
+            "Input shape must be (batch_size, num_features)"
 
     def get_output_shape_for(self, input_shape):
         #
         return (input_shape[0], self.n_repeat, input_shape[1])
 
     def get_output_for(self, inputs, *args, **kwargs):
-
-        return theano.tensor.stack(*[inputs] * self.n_repeat)
+        # Check this works as intended
+        return T.stack(*[inputs] * self.n_repeat).dimshuffle(1, 0, 2)

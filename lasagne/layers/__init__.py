@@ -10,3 +10,4 @@ from .merge import *
 from .recurrent import *
 from .normalization import *
 from .repeat import *
+from .softmax import *
