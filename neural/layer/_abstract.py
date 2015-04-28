@@ -1,8 +1,23 @@
 
+import numpy as np
+
 class LayerAbstract:
     def __init__(self, *args, **kwargs):
         self.weights = []
         self.outputs_info = []
+
+    def reset_weights(self):
+        for weight in self.weights:
+
+            shape = weight.get_value(
+                borrow=True,
+                return_internal_type=True
+            ).shape
+
+            weight.set_value(
+                np.random.randn(*shape).astype('float32'),
+                borrow=True
+            )
 
     def infer_taps(self):
         taps = 0

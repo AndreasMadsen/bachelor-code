@@ -1,4 +1,4 @@
-it d
+
 import run
 
 import os
@@ -6,7 +6,7 @@ import os.path as path
 import neural
 import numpy as np
 
-EPOCHS = 4000
+EPOCHS = 20
 TEST_SIZE = 200
 TRAIN_SIZES = [100, 200, 400, 800, 1600, 3200, 6400, 12800]
 Y_SHAPE = (TEST_SIZE, 6, 15)
@@ -57,13 +57,12 @@ def create_model():
 
     return sutskever
 
-def run_model(train_size, test_dateset):
+def run_model(model, train_size, test_dateset):
     np.random.seed(42)
 
     print('')
     print('### Creating sutskever network, train size: %d ###' % (train_size, ))
-
-    model = create_model()
+    model.reset_weights()
 
     train_dataset = count_network_sequence(train_size)
 
@@ -77,6 +76,7 @@ def run_model(train_size, test_dateset):
         'test_predict': model.predict(test_dateset[0])
     }
 
+model = create_model()
 test_dataset = count_network_sequence(TEST_SIZE)
 
 train_loss = np.zeros(len(TRAIN_SIZES))
@@ -84,7 +84,7 @@ test_loss = np.zeros(len(TRAIN_SIZES))
 test_predict = np.zeros((len(TRAIN_SIZES), ) + Y_SHAPE)
 
 for i, train_size in enumerate(TRAIN_SIZES):
-    results = run_model(train_size, test_dataset)
+    results = run_model(model, train_size, test_dataset)
     train_loss[i] = results['train_loss']
     test_loss[i] = results['test_loss']
     test_predict[i] = results['test_predict']
