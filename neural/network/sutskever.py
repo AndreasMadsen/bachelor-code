@@ -50,6 +50,14 @@ class SutskeverNetwork(OptimizerAbstraction):
         """
         return self._encoder.weight_list() + self._decoder.weight_list()
 
+    def reset_weights(self):
+        """
+        Will reinitialize all weights using a random number generator
+        """
+        if (self._verbose): print('Weights reset')
+        self._decoder.reset_weights()
+        self._encoder.reset_weights()
+
     def forward_pass(self, x):
         (s_enc, b_enc) = self._encoder.forward_pass(x)
         (eois, log_y, y) = self._decoder.forward_pass(s_enc, b_enc)
