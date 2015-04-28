@@ -22,7 +22,7 @@ def mnist():
     time = data.data.shape[1]
 
     return Dataset(
-        data.data.reshape(obs, 1, time).astype('float32')[shuffle, :],
+        (data.data / 255.0).reshape(obs, 1, time).astype('float32')[shuffle, :],
         data.target.astype('int32')[shuffle],
         np.unique(data.target).size
     )

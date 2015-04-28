@@ -2,12 +2,14 @@
 import run
 
 import os
+import os.path as path
 import theano.tensor as T
 import numpy as np
 
 import dataset
 import neural
 
+thisdir = path.dirname(path.realpath(__file__))
 run_name = (os.environ.get('OUTNAME')
             if os.environ.get('OUTNAME') is not None
             else str(os.getpid()))
@@ -67,7 +69,7 @@ def simple_learn(model, train_dataset, test_dateset, epochs):
 test_dataset = (mnist.data[0:200, :], mnist.target[0:200])
 train_dataset = (mnist.data[200:1200, :], mnist.target[200:1200])
 
-results = simple_learn(encoder, train_dataset, test_dataset, 4000)
+results = simple_learn(encoder, train_dataset, test_dataset, 20)
 
 np.savez_compressed(
     path.join(thisdir, '..', 'outputs', run_name + '.npz'),
