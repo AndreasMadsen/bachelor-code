@@ -14,7 +14,7 @@ run_name = (os.environ.get('OUTNAME')
             if os.environ.get('OUTNAME') is not None
             else str(os.getpid()))
 
-mnist = dataset.encoder.mnist()
+mnist = dataset.encoder.mode_encoder_sequence(300)
 
 encoder = neural.network.SutskeverEncoder(
     [T.tensor3('x')], T.ivector('t'),
@@ -37,7 +37,7 @@ encoder.compile()
 
 def missclassification(model, test_dateset):
     (data, target) = test_dateset
-    return np.mean(model.predict(data) != target)
+    return np.mean(np.argmax(model.predict(data), axis=1) != target)
 
 def simple_learn(model, train_dataset, test_dateset, epochs):
     print('learning model')
@@ -56,20 +56,22 @@ def simple_learn(model, train_dataset, test_dateset, epochs):
         train_miss[i] = missclassification(model, train_dataset)
         test_miss[i] = missclassification(model, test_dataset)
 
-        print('  train: size %d, epoch %d, train loss %f' % (train_size, i, train_loss[i]))
+        print('  train: size %d, epoch %d, train loss %f, test miss: %f' % (train_size, i, train_loss[i], test_miss[i]))
 
     return {
         'train_loss': train_loss,
         'test_loss': test_loss,
 
-        'train_miss': test_miss,
-        'test_miss': test_miss
+        'train_miss': train_miss,
+        'test_miss': test_miss,
+
+        'n_classes': np.asarray([mnist.n_classes])
     }
 
-test_dataset = (mnist.data[0:200, :], mnist.target[0:200])
-train_dataset = (mnist.data[200:1200, :], mnist.target[200:1200])
+test_dataset = (mnist.data[0:100, :], mnist.target[0:100])
+train_dataset = (mnist.data[100:300, :], mnist.target[100:300])
 
-results = simple_learn(encoder, train_dataset, test_dataset, 20)
+results = simple_learn(encoder, train_dataset, test_dataset, 500)
 
 np.savez_compressed(
     path.join(thisdir, '..', 'outputs', run_name + '.npz'),

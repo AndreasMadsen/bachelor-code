@@ -1,5 +1,5 @@
 #!/bin/sh
-#PBS -N mnist-encoder
+#PBS -N encoder
 #PBS -l walltime=04:00:00
 #PBS -l nodes=1:ppn=1:gpus=1
 #PBS -m eba
@@ -16,4 +16,4 @@ module load cuda
 export PYTHONPATH=
 source ~/stdpy3/bin/activate
 
-OUTNAME='encoder-mnist-500-network' python3 run/mnist_encoder.py
+OUTNAME='encoder-mnist-500-network' python3 run/encoder.py
