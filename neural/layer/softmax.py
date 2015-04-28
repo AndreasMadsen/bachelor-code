@@ -17,7 +17,7 @@ class Softmax(LayerAbstract):
         self.input_size = prev_layer.output_size
 
         self._W_h0_h1 = theano.shared(
-            np.random.randn(self.input_size, self.output_size).astype('float32'),
+            (0.1 * np.random.randn(self.input_size, self.output_size)).astype('float32'),
             name="W_h%d_h%d" % (self.layer_index - 1, self.layer_index),
             borrow=True
         )
