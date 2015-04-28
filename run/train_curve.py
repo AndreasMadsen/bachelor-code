@@ -1,4 +1,4 @@
-
+it d
 import run
 
 import os
@@ -8,7 +8,7 @@ import numpy as np
 
 EPOCHS = 4000
 TEST_SIZE = 200
-TRAIN_SIZES = [100, 200, 400, 800, 1600, 3200]
+TRAIN_SIZES = [100, 200, 400, 800, 1600, 3200, 6400, 12800]
 Y_SHAPE = (TEST_SIZE, 6, 15)
 OUTNAME = os.environ.get('OUTNAME')
 
