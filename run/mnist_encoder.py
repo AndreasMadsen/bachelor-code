@@ -1,9 +1,16 @@
 
 import run
 
+import os
+import theano.tensor as T
+import numpy as np
+
 import dataset
 import neural
-import theano.tensor as T
+
+run_name = (os.environ.get('OUTNAME')
+            if os.environ.get('OUTNAME') is not None
+            else str(os.getpid()))
 
 mnist = dataset.encoder.mnist()
 
@@ -26,15 +33,43 @@ encoder.set_loss(neural.loss.NaiveEntropy(time=False, log=True))
 # Compile train, test and predict functions
 encoder.compile()
 
+def missclassification(model, test_dateset):
+    (data, target) = test_dateset
+    return np.mean(model.predict(data) != target)
+
 def simple_learn(model, train_dataset, test_dateset, epochs):
     print('learning model')
     train_size = train_dataset[0].shape[0]
 
+    train_loss = np.zeros(epochs)
+    test_loss = np.zeros(epochs)
+
+    train_miss = np.zeros(epochs)
+    test_miss = np.zeros(epochs)
+
     for i in range(0, epochs):
-        train_error = model.train(*train_dataset)
-        print('  train: size %d, epoch %d, loss %f' % (train_size, i, train_error))
+        train_loss[i] = model.train(*train_dataset)
+        test_loss[i] = model.test(*test_dataset)
 
-test_dataset = (mnist.data[0:1000, :], mnist.target[0:1000])
-train_dataset = (mnist.data[1001:4000, :], mnist.target[1001:4000])
+        train_miss[i] = missclassification(model, train_dataset)
+        test_miss[i] = missclassification(model, test_dataset)
 
-simple_learn(encoder, train_dataset, test_dataset, 4000)
+        print('  train: size %d, epoch %d, train loss %f' % (train_size, i, train_loss[i]))
+
+    return {
+        'train_loss': train_loss,
+        'test_loss': test_loss,
+
+        'train_miss': test_miss,
+        'test_miss': test_miss
+    }
+
+test_dataset = (mnist.data[0:200, :], mnist.target[0:200])
+train_dataset = (mnist.data[200:1200, :], mnist.target[200:1200])
+
+results = simple_learn(encoder, train_dataset, test_dataset, 4000)
+
+np.savez_compressed(
+    path.join(thisdir, '..', 'outputs', run_name + '.npz'),
+    **results
+)
