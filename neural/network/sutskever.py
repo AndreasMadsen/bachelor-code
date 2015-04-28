@@ -25,7 +25,7 @@ class SutskeverNetwork(OptimizerAbstraction):
         self._max_output_size = max_output_size
 
         # encoder -> decoder
-        self._encoder = Encoder([self._inputs[0]])
+        self._encoder = SutskeverEncoder([self._inputs[0]], self._target)
         self._decoder = Decoder(self._inputs)
 
     def test_value(self, x, t):
@@ -89,7 +89,7 @@ class SutskeverNetwork(OptimizerAbstraction):
         eosi = np.ones(x.shape[0], dtype='int32') * (self._max_output_size - 1)
         return super().predict(x, eosi)
 
-class Encoder(BaseAbstraction):
+class SutskeverEncoder(BaseAbstraction, OptimizerAbstraction):
     """
     The encoder is like a normal forward scanner but doesn't have an output
     layer applied to it. It also only outputs the last time iteration. This
@@ -98,10 +98,20 @@ class Encoder(BaseAbstraction):
     This implementation also uses a vector, indicate when the sequences starts
     relative to the other sequences in the minibatch.
     """
-    def __init__(self, inputs, **kwargs):
-        super().__init__(**kwargs)
-        # self._input is only used by the layers, to infer the batch size.
+    def __init__(self, inputs, target, **kwargs):
+        BaseAbstraction.__init__(self, **kwargs)
+        OptimizerAbstraction.__init__(self, **kwargs)
+
+        # self._inputs is only used by the layers, to infer the batch size.
         self._inputs = inputs
+        self._target = target
+
+    def test_value(self, x, b_enc):
+        self._inputs[0].tag.test_value = x
+        self._target.tag.test_value = b_enc
+
+    def _preloss(self, log_y, y, t):
+        return (log_y, t)
 
     def _forward_scanner(self, x_t, *args):
         """
@@ -151,11 +161,11 @@ class Encoder(BaseAbstraction):
 
         # the last output is assumed to be the network output, take the
         # last time iteration. Return value shape is: row (observations), col (dims)
-        if (isinstance(self._layers[-1], LSTM)):
+        if (isinstance(self._layers[-1], RNN)):
+            return (None, b_enc[-1, :, :])
+        else:
             s_enc = outputs[-2]
             return (s_enc[-1, :, :], b_enc[-1, :, :])
-        else:
-            return (None, b_enc[-1, :, :])
 
 class Decoder(BaseAbstraction):
     """
