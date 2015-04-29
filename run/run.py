@@ -37,7 +37,7 @@ output_file = path.join(thisdir, '..', 'outputs', run_name + '.npz')
 def simple_learn(model, data, test_size, epochs, missclassification):
     # Use 1/3 as test data
     test_dataset = (data.data[0:test_size, :], data.target[0:test_size])
-    train_dataset = (data.data[test_size:300, :], data.target[test_size:300])
+    train_dataset = (data.data[test_size:, :], data.target[test_size:])
 
     print('learning model')
     train_size = train_dataset[0].shape[0]
