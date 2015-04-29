@@ -1,15 +1,13 @@
 
 import test
-from datasets import mode_encoder_sequence
 from nose.tools import *
 
+import dataset
 import numpy as np
 import theano
 import theano.tensor as T
 
 import neural
-from neural.network._optimizer import OptimizerAbstraction
-from neural.network.sutskever import Encoder
 
 def test_sutskever_encoder_fast():
     # obs: 2, dims: 3, time: 6
@@ -29,7 +27,8 @@ def test_sutskever_encoder_fast():
     x_input.tag.test_value = x
 
     # Create encoder
-    encoder = Encoder(x_input)
+    encoder = neural.network.SutskeverEncoder()
+    encoder.test_value(x, None)
 
     # Setup layers for a logistic classifier model
     encoder.set_input(neural.layer.Input(3))
@@ -70,41 +69,28 @@ def test_sutskever_encoder_fast():
         [3.54513669, 0.00469692, 1.24734366, 1.04889858]
     ]))
 
-class EncoderOptimizer(Encoder, OptimizerAbstraction):
-    def __init__(self, **kwargs):
-        self._input = T.tensor3('x')
-        self._target = T.ivector('t')
-
-        Encoder.__init__(self, self._input, **kwargs)
-        OptimizerAbstraction.__init__(self, **kwargs)
-
-    def forward_pass(self, x):
-        # Since we can only train on one output tensor use the hidden output
-        (s_enc, b_enc) = Encoder.forward_pass(self, x)
-        return b_enc
-
-    def test_value(self, x, b_enc):
-        self._input.tag.test_value = x
-        self._target.tag.test_value = b_enc
-
 def test_sutskever_encoder_train():
-    encoder = EncoderOptimizer(eta=0.05, momentum=0.2)
+    def generator(items):
+        d = dataset.encoder.mode(items)
+        return (d.data, d.target)
+
+    encoder = neural.network.SutskeverEncoder(eta=0.05, momentum=0.2)
     # Setup theano tap.test_value
-    encoder.test_value(*mode_encoder_sequence(10))
+    encoder.test_value(*generator(10))
 
     # Setup layers
     encoder.set_input(neural.layer.Input(10))
     encoder.push_layer(neural.layer.LSTM(15))
-    encoder.push_layer(neural.layer.Softmax(10))
+    encoder.push_layer(neural.layer.Softmax(10, log=True))
 
     # Setup loss function
-    encoder.set_loss(neural.loss.NaiveEntropy(time=False))
+    encoder.set_loss(neural.loss.NaiveEntropy(time=False, log=True))
 
     # Compile train, test and predict functions
     encoder.compile()
 
     test.classifier(
-        encoder, mode_encoder_sequence,
-        y_shape=(100, 10), performance=0.8,
+        encoder, generator,
+        y_shape=(100, 10), performance=0.8, asserts=True,
         epochs=850
     )

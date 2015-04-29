@@ -48,8 +48,6 @@ def _test_sutskever_network_count():
 
     theano.config.compute_test_value = 'warn'
 
-_test_sutskever_network_count()
-
 def _test_sutskever_network_filter():
     # TODO: debug errors caused by test_value
     theano.config.compute_test_value = 'off'

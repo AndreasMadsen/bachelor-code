@@ -1,6 +1,6 @@
 
 import test
-from datasets import count_decoder_sequence
+import dataset
 from nose.tools import *
 
 import numpy as np
@@ -8,8 +8,6 @@ import theano
 import theano.tensor as T
 
 import neural
-from neural.network._optimizer import OptimizerAbstraction
-from neural.network.sutskever import Decoder, SutskeverNetwork
 
 def test_sutskever_decoder_fast():
     # obs: 2, dims: 4, time: NA
@@ -21,7 +19,8 @@ def test_sutskever_decoder_fast():
     b_input.tag.test_value = b_enc
 
     # Create encoder
-    decoder = Decoder(b_input)
+    decoder = neural.network.SutskeverDecoder()
+    decoder.test_value(b_enc, None)
 
     # Setup layers
     decoder.set_input(neural.layer.Input(3))
@@ -51,7 +50,7 @@ def test_sutskever_decoder_fast():
     ], dtype='float32'))
 
     # Perform forward pass
-    (eois, log_y, y) = decoder.forward_pass(None, b_input)
+    (eois, log_y, y) = decoder.forward_pass(b_input)
 
     # Check that the gradient can be calculated
     # TODO: debug errors caused by test_value
@@ -80,42 +79,22 @@ def test_sutskever_decoder_fast():
     ]))
     assert_equal(eois[1].tag.test_value, 1)
 
-class DecoderOptimizer(Decoder, OptimizerAbstraction):
-    def __init__(self, **kwargs):
-        self._input = T.matrix('b_enc')
-        self._target = T.imatrix('t')
-
-        Decoder.__init__(self, self._input, **kwargs)
-        OptimizerAbstraction.__init__(self, **kwargs)
-
-    def test_value(self, x, t):
-        self._input.tag.test_value = x
-        self._target.tag.test_value = t
-
-    def forward_pass(self, b_enc):
-        # Use the hidden input as the cell input too
-        # TODO: consider normalizing the input
-        s_enc = b_enc
-        return Decoder.forward_pass(self, s_enc, b_enc)
-
-    def _preloss_scanner(self, *args, **kwargs):
-        return SutskeverNetwork._preloss_scanner(self, *args, **kwargs)
-
-    def _preloss(self, *args, **kwargs):
-        return SutskeverNetwork._preloss(self, *args, **kwargs)
-
 def _test_sutskever_decoder_train():
     theano.config.compute_test_value = 'off'
 
-    decoder = DecoderOptimizer(eta=0.2, momentum=0.3, maxlength=15, verbose=True)
+    def generator(items):
+        d = dataset.decoder.count(items)
+        return (d.data, d.target)
+
+    decoder = neural.network.SutskeverDecoder(eta=0.2, momentum=0.3, maxlength=9, verbose=True)
     # Setup theano tap.test_value
-    decoder.test_value(*count_decoder_sequence(10))
+    decoder.test_value(*generator(10))
 
     # Setup layers
     decoder.set_input(neural.layer.Input(6))  # Should match output
-    decoder.push_layer(neural.layer.LSTM(1, bias=True))  # Should match b_enc input
-    decoder.push_layer(neural.layer.LSTM(80, bias=True))
-    decoder.push_layer(neural.layer.Softmax(6, bias=True, log=True))
+    decoder.push_layer(neural.layer.LSTM(1))  # Should match b_enc input
+    decoder.push_layer(neural.layer.LSTM(80))
+    decoder.push_layer(neural.layer.Softmax(6, log=True))
 
     # Setup loss function
     decoder.set_loss(neural.loss.NaiveEntropy(log=True))
@@ -124,12 +103,12 @@ def _test_sutskever_decoder_train():
     decoder.compile()
 
     test.classifier(
-        decoder, count_decoder_sequence,
+        decoder, generator,
         y_shape=(100, 6, 9), performance=0.8, plot=True, asserts=False,
         epochs=1000
     )
 
-    (b_enc, t) = count_decoder_sequence(10)
+    (b_enc, t) = generator(10)
     y = decoder.predict(b_enc)
 
     print(y)
