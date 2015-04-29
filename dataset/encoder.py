@@ -34,7 +34,7 @@ def mnist():
         np.unique(data.target).size
     )
 
-def mode_encoder_sequence(items, Tmin=17, Tmax=20):
+def mode(items, Tmin=17, Tmax=20):
     maxIndex = 10
 
     t = np.random.randint(1, maxIndex, size=(items, )).astype('int32')
