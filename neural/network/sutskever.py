@@ -175,11 +175,27 @@ class Encoder(BaseAbstraction):
 
         # the last output is assumed to be the network output, take the
         # last time iteration. Return value shape is: row (observations), col (dims)
-        if (isinstance(self._layers[-1], LSTM)):
+        if (isinstance(self._layers[-1], RNN)):
+            return (None, b_enc[-1, :, :])
+        else:
             s_enc = outputs[-2]
             return (s_enc[-1, :, :], b_enc[-1, :, :])
-        else:
-            return (None, b_enc[-1, :, :])
+
+class SutskeverEncoder(Encoder, OptimizerAbstraction):
+    def __init__(self, **kwargs):
+        self._input = T.tensor3('x')
+        self._target = T.ivector('t')
+
+        Encoder.__init__(self, self._input, **kwargs)
+        OptimizerAbstraction.__init__(self, **kwargs)
+
+    def _preloss(self, y_log, y, t):
+        return (y_log, t)
+
+    def test_value(self, x, b_enc):
+        self._input.tag.test_value = x
+        self._target.tag.test_value = b_enc
+
 
 class Decoder(BaseAbstraction):
     """
@@ -297,3 +313,27 @@ class Decoder(BaseAbstraction):
         y = outputs[-1].transpose(1, 2, 0)
 
         return (eosi, log_y, y)
+
+
+class SutskeverDecoder(Decoder, OptimizerAbstraction):
+    def __init__(self, **kwargs):
+        self._input = T.matrix('b_enc')
+        self._target = T.imatrix('t')
+
+        Decoder.__init__(self, self._input, **kwargs)
+        OptimizerAbstraction.__init__(self, **kwargs)
+
+    def test_value(self, x, t):
+        self._input.tag.test_value = x
+        self._target.tag.test_value = t
+
+    def forward_pass(self, b_enc):
+        # Use the hidden input as the cell input too if it is a LSTM layer
+        s_enc = b_enc if isinstance(self._layers[1], LSTM) else None
+        return Decoder.forward_pass(self, s_enc, b_enc)
+
+    def _preloss_scanner(self, *args, **kwargs):
+        return SutskeverNetwork._preloss_scanner(self, *args, **kwargs)
+
+    def _preloss(self, *args, **kwargs):
+        return SutskeverNetwork._preloss(self, *args, **kwargs)
