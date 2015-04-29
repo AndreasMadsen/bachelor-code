@@ -12,9 +12,6 @@ decoder = neural.network.SutskeverDecoder(
     eta=0.2, momentum=0.3, maxlength=9, verbose=True
 )
 
-# Setup theano tap.test_value
-decoder.test_value(data.data[0:10, :], data.target[0:10])
-
 # Setup layers
 decoder.set_input(neural.layer.Input(6))  # Should match output
 decoder.push_layer(neural.layer.LSTM(1))  # Should match b_enc input
@@ -34,6 +31,6 @@ def missclassification(model, test_dataset):
 test_dataset = (data.data[0:100, :], data.target[0:100])
 train_dataset = (data.data[100:300, :], data.target[100:300])
 
-results = run.simple_learn(decoder, data, 500, missclassification)
+results = run.simple_learn(decoder, data, 100, 500, missclassification)
 
 np.savez_compressed(run.output_file, **results)

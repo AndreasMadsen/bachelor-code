@@ -34,9 +34,8 @@ run_name = (os.environ.get('OUTNAME')
 output_file = path.join(thisdir, '..', 'outputs', run_name + '.npz')
 
 #
-def simple_learn(model, data, epochs, missclassification):
+def simple_learn(model, data, test_size, epochs, missclassification):
     # Use 1/3 as test data
-    test_size = data.data.shape[0] // 3
     test_dataset = (data.data[0:test_size, :], data.target[0:test_size])
     train_dataset = (data.data[test_size:300, :], data.target[test_size:300])
 
