@@ -19,13 +19,13 @@ def test_sutskever_decoder_fast():
     b_input.tag.test_value = b_enc
 
     # Create encoder
-    decoder = neural.network.SutskeverDecoder()
+    decoder = neural.network.SutskeverDecoder(maxlength=2)
     decoder.test_value(b_enc, None)
 
     # Setup layers
     decoder.set_input(neural.layer.Input(3))
     decoder.push_layer(neural.layer.RNN(4))
-    decoder.push_layer(neural.layer.Softmax(3, log=True))
+    decoder.push_layer(neural.layer.Softmax(3))
 
     # Enforce weights for consistent results
     weights = decoder.weight_list()
@@ -50,7 +50,7 @@ def test_sutskever_decoder_fast():
     ], dtype='float32'))
 
     # Perform forward pass
-    (eois, log_y, y) = decoder.forward_pass(b_input)
+    y = decoder.forward_pass(b_input)
 
     # Check that the gradient can be calculated
     # TODO: debug errors caused by test_value
@@ -60,33 +60,25 @@ def test_sutskever_decoder_fast():
     assert_equal(y.tag.test_value.shape, (2, 3, 2))
 
     # The first sequences ends after 1 iteration
-    log_y0 = log_y[:, :, 0]
     y0 = y[:, :, 0]
-    assert(np.allclose(log_y0.tag.test_value, np.log(y0.tag.test_value)))
     assert(np.allclose(y0.tag.test_value, [
         [0.71534252, 0.11405356, 0.17060389],
         [0.34762833, 0.23523150, 0.41714019]
     ]))
-    assert_equal(eois[0].tag.test_value, 0)
 
     # The second sequence ends after 2 iterations
-    log_y1 = log_y[:, :, 1]
     y1 = y[:, :, 1]
-    assert(np.allclose(log_y1.tag.test_value, np.log(y1.tag.test_value)))
     assert(np.allclose(y1.tag.test_value, [
-        [0.71534252, 0.11405356, 0.17060389],
+        [0.78832114, 0.06528059, 0.14639825],
         [0.69669789, 0.09191318, 0.21138890]
     ]))
-    assert_equal(eois[1].tag.test_value, 1)
 
 def _test_sutskever_decoder_train():
-    theano.config.compute_test_value = 'off'
-
     def generator(items):
         d = dataset.decoder.count(items)
         return (d.data, d.target)
 
-    decoder = neural.network.SutskeverDecoder(eta=0.2, momentum=0.3, maxlength=9, verbose=True)
+    decoder = neural.network.SutskeverDecoder(eta=0.1, momentum=0.0, maxlength=9, verbose=True)
     # Setup theano tap.test_value
     decoder.test_value(*generator(10))
 
@@ -94,10 +86,10 @@ def _test_sutskever_decoder_train():
     decoder.set_input(neural.layer.Input(6))  # Should match output
     decoder.push_layer(neural.layer.LSTM(1))  # Should match b_enc input
     decoder.push_layer(neural.layer.LSTM(80))
-    decoder.push_layer(neural.layer.Softmax(6, log=True))
+    decoder.push_layer(neural.layer.Softmax(6))
 
     # Setup loss function
-    decoder.set_loss(neural.loss.NaiveEntropy(log=True))
+    decoder.set_loss(neural.loss.NaiveEntropy())
 
     # Compile train, test and predict functions
     decoder.compile()
@@ -114,5 +106,3 @@ def _test_sutskever_decoder_train():
     print(y)
     print(np.argmax(y, axis=1))
     print(t)
-
-    theano.config.compute_test_value = 'warn'

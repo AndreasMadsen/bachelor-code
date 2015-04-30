@@ -11,9 +11,6 @@ import neural
 
 
 def _test_sutskever_network_count():
-    # TODO: debug errors caused by test_value
-    theano.config.compute_test_value = 'off'
-
     sutskever = neural.network.Sutskever(eta=0.2, momentum=0.3, max_output_size=9, verbose=True)
     # Setup theano tap.test_value
     sutskever.test_value(*count_network_sequence(10))
@@ -25,10 +22,10 @@ def _test_sutskever_network_count():
     sutskever.set_decoder_input(neural.layer.Input(6))
     sutskever.push_decoder_layer(neural.layer.LSTM(2))
     sutskever.push_decoder_layer(neural.layer.LSTM(80))
-    sutskever.push_decoder_layer(neural.layer.Softmax(6, log=True))
+    sutskever.push_decoder_layer(neural.layer.Softmax(6))
 
     # Setup loss function
-    sutskever.set_loss(neural.loss.NaiveEntropy(log=True))
+    sutskever.set_loss(neural.loss.NaiveEntropy())
 
     # Compile train, test and predict functions
     sutskever.compile()
@@ -46,12 +43,7 @@ def _test_sutskever_network_count():
     print(np.argmax(y, axis=1))
     print(t)
 
-    theano.config.compute_test_value = 'warn'
-
 def _test_sutskever_network_filter():
-    # TODO: debug errors caused by test_value
-    theano.config.compute_test_value = 'off'
-
     sutskever = neural.network.Sutskever(eta=0.1, momentum=0.9, max_output_size=10)
     # Setup theano tap.test_value
     test_value = subset_vocal_sequence(10)
@@ -97,5 +89,3 @@ def _test_sutskever_network_filter():
     print(mat2str(np.argmax(x, axis=1)))
     print(mat2str(np.argmax(y, axis=1)))
     print(mat2str(t))
-
-    theano.config.compute_test_value = 'warn'

@@ -74,17 +74,17 @@ def test_sutskever_encoder_train():
         d = dataset.encoder.mode(items)
         return (d.data, d.target)
 
-    encoder = neural.network.SutskeverEncoder(eta=0.05, momentum=0.2)
+    encoder = neural.network.SutskeverEncoder(eta=0.05, momentum=0.04)
     # Setup theano tap.test_value
     encoder.test_value(*generator(10))
 
     # Setup layers
     encoder.set_input(neural.layer.Input(10))
     encoder.push_layer(neural.layer.LSTM(15))
-    encoder.push_layer(neural.layer.Softmax(10, log=True))
+    encoder.push_layer(neural.layer.Softmax(10))
 
     # Setup loss function
-    encoder.set_loss(neural.loss.NaiveEntropy(time=False, log=True))
+    encoder.set_loss(neural.loss.NaiveEntropy(time=False))
 
     # Compile train, test and predict functions
     encoder.compile()
@@ -92,5 +92,5 @@ def test_sutskever_encoder_train():
     test.classifier(
         encoder, generator,
         y_shape=(100, 10), performance=0.8, asserts=True,
-        epochs=850
+        epochs=600
     )
