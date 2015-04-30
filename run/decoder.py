@@ -6,20 +6,20 @@ import numpy as np
 import dataset
 import neural
 
-data = dataset.decoder.count(300)
+data = dataset.decoder.memorize(300)
 
 decoder = neural.network.SutskeverDecoder(
-    eta=0.2, momentum=0.3, maxlength=9, verbose=True
+    eta=0.1, momentum=0.0, maxlength=data.target.shape[1], verbose=True
 )
 
 # Setup layers
-decoder.set_input(neural.layer.Input(6))  # Should match output
+decoder.set_input(neural.layer.Input(data.n_classes))  # Should match output
 decoder.push_layer(neural.layer.LSTM(1))  # Should match b_enc input
 decoder.push_layer(neural.layer.LSTM(80))
-decoder.push_layer(neural.layer.Softmax(6, log=True))
+decoder.push_layer(neural.layer.Softmax(data.n_classes))
 
 # Setup loss function
-decoder.set_loss(neural.loss.NaiveEntropy(log=True))
+decoder.set_loss(neural.loss.NaiveEntropy())
 
 # Compile train, test and predict functions
 decoder.compile()
@@ -27,11 +27,17 @@ decoder.compile()
 # TODO: this will not work when T(y) != T(t)
 def missclassification(model, test_dataset):
     (data, target) = test_dataset
-    return np.mean(np.argmax(model.predict(data), axis=1) != target)
+    pred = np.argmax(model.predict(data), axis=1)
 
-test_dataset = (data.data[0:100, :], data.target[0:100])
-train_dataset = (data.data[100:300, :], data.target[100:300])
+    return np.mean(pred != target)
 
-results = run.simple_learn(decoder, data, 100, 500, missclassification)
+results = run.simple_learn(decoder, data, 100, 1000, missclassification)
 
 np.savez_compressed(run.output_file, **results)
+
+# show example
+(b_enc, t) = (data.data[0:10, :], data.target[0:10, :])
+y = decoder.predict(b_enc)
+
+print(np.argmax(y, axis=1))
+print(t)

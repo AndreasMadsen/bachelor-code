@@ -25,7 +25,7 @@ plt.plot(np.arange(0, epochs), output['train_miss'], color='IndianRed', label='t
 plt.plot(np.arange(0, epochs), output['test_miss'], color='SteelBlue', label='test')
 plt.axhline((n_classes - 1) / n_classes, color='gray')
 plt.legend()
-plt.ylabel('misclassification error [%]')
+plt.ylabel('misclassification error [rate]')
 plt.xlabel('epoch')
 plt.ylim(0, 1.1)
 
