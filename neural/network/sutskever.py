@@ -60,60 +60,11 @@ class SutskeverNetwork(OptimizerAbstraction):
 
     def forward_pass(self, x):
         (s_enc, b_enc) = self._encoder.forward_pass(x)
-        (eois, log_y, y) = self._decoder.forward_pass(s_enc, b_enc)
+        y = self._decoder.forward_pass(s_enc, b_enc)
 
-        return (eois, log_y, y)
-
-    def _preloss_scanner(self, y_i, eosi_i, t_i, y_pad, dims, time):
-        # Get length of y seqence including the first <EOS>
-        yend = eosi_i + 1
-
-        # Since t is already padded with <EOS>, we can just copy the
-        # entire sequence.
-        tend = t_i.shape[0]
-
-        # Create a new y sequence with T elements
-        y2_i = T.zeros((dims, time), dtype='float32')
-        # Keep the actual y elements
-        y2_i = T.set_subtensor(y2_i[:, :yend], y_i[:, :yend])
-        # Add ignore padding to y2 for the remaining elments
-        y2_i = T.set_subtensor(y2_i[:, yend:], y_pad)
-
-        # Createa a new t seqnece with T elements
-        t2_i = T.zeros((time, ), dtype='int32')
-        # Keep the actual t elements
-        t2_i = T.set_subtensor(t2_i[:tend], t_i)
-        # Add <EOS> padding to t2 for the remaining elments,
-        # the y2 padding will ignore this
-        # -- No code, since 0 from T.zeros is <EOS>
-
-        return [y2_i, t2_i]
-
-    def _preloss(self, eosi, log_y, y, t):
-        # Create an <EOS> collum vector
-        y_pad = T.ones((y.shape[1], ), dtype='float32')
-        y_pad = y_pad * T.log(0.01 / T.cast(y.shape[1], 'float32'))
-        y_pad = T.set_subtensor(y_pad[0], T.log(0.99))
-        y_pad = y_pad.dimshuffle((0, 'x'))
-
-        (log_y_pad, t_pad), _ = theano.scan(
-            fn=self._preloss_scanner,
-            sequences=[log_y, eosi, t],
-            outputs_info=[None, None],
-            non_sequences=[
-                y_pad,
-                y.shape[1],
-                T.max([y.shape[2], t.shape[1]])
-            ],
-            name='sutskever_loss'
-        )
-
-        return (log_y_pad, t_pad)
+        return y
 
     def compile(self):
-        # Sutskever is numerically unstable unless stable prelog is used
-        assert(self._output_layer._add_log)
-
         # The input decoder much match its softmax output
         assert(self._decoder._layers[+0].output_size == self._decoder._layers[-1].output_size)
         # The hidden encoder output much match the hidden decoder intialization
@@ -183,11 +134,11 @@ class Encoder(BaseAbstraction):
 
         # the last output is assumed to be the network output, take the
         # last time iteration. Return value shape is: row (observations), col (dims)
-        if (isinstance(self._layers[-1], RNN)):
-            return (None, b_enc[-1, :, :])
-        else:
+        if (isinstance(self._layers[-1], LSTM)):
             s_enc = outputs[-2]
             return (s_enc[-1, :, :], b_enc[-1, :, :])
+        else:
+            return (None, b_enc[-1, :, :])
 
 class SutskeverEncoder(Encoder, OptimizerAbstraction):
     def __init__(self, **kwargs):
@@ -197,8 +148,8 @@ class SutskeverEncoder(Encoder, OptimizerAbstraction):
         Encoder.__init__(self, self._input, **kwargs)
         OptimizerAbstraction.__init__(self, **kwargs)
 
-    def _preloss(self, y_log, y, t):
-        return (y_log, t)
+    def _preloss(self, s_enc, y, t):
+        return (y, t)
 
     def test_value(self, x, b_enc):
         self._input.tag.test_value = x
@@ -218,7 +169,7 @@ class Decoder(BaseAbstraction):
         self._input = x_input
         self._maxlength = maxlength
 
-    def _forward_scanner(self, t, eosi, mask, *args):
+    def _forward_scanner(self, t, *args):
         """
         Defines the forward equations for each time step.
         """
@@ -230,7 +181,6 @@ class Decoder(BaseAbstraction):
         all_outputs = []
         curr = 0
         prev_output = y
-        mask_col = mask.dimshuffle((0, 'x'))
 
         # Loop though each layer and apply send the current layers output
         # to the next layer. The layer can have additional paramers, if
@@ -240,7 +190,7 @@ class Decoder(BaseAbstraction):
             # It can be assumed that the last value in `layer_outputs` is the
             # actual layer output. The tuple may contain other values, such
             # as the current cell state. They won't be send to the next layer.
-            layer_outputs = layer.scanner(prev_output, *args[curr:curr + taps], mask=mask_col)
+            layer_outputs = layer.scanner(prev_output, *args[curr:curr + taps])
             curr += taps
 
             # Concatenate all outputs
@@ -248,17 +198,8 @@ class Decoder(BaseAbstraction):
             # The last output is assumed to be the layer output
             prev_output = layer_outputs[-1]
 
-        # Update the mask, if <EOS> was returned by the last iteration.
-        # At this point the prev_output is the last layer_output and is
-        # thus the network output.
-        new_mask = T.eq(T.argmax(prev_output, axis=1), 0)
-        # Update eosi where new observations have ended `new_mask - mask`
-        eosi = T.set_subtensor(eosi[T.nonzero(new_mask - mask)[0]], t)
-
-        all_outputs = [eosi, new_mask] + all_outputs
-
         # Stop when all sequences are masked
-        return (all_outputs, theano.scan_module.until(T.all(new_mask)))
+        return all_outputs
 
     def _outputs_info_list(self, s_enc, b_enc):
         outputs_info = super()._outputs_info_list()
@@ -282,19 +223,7 @@ class Decoder(BaseAbstraction):
         y.name = 'y'
         outputs_info[-1] = y
 
-        # 3) Initialize with no mask
-        mask = T.zeros((b_enc.shape[0], ), dtype='int8')
-        mask.name = 'mask'
-        outputs_info = [mask] + outputs_info
-
-        # 4) Initialize the <EOS> index counter, to be the last possibol
-        # index. This way, if the scanner doesn't end by <EOS> the eosi
-        # will still be meaningful in the used context.
-        eosi = (self._maxlength - 1) * T.ones((b_enc.shape[0], ), dtype='int32')
-        eosi.name = 'eosi'
-        outputs_info = [eosi] + outputs_info
-
-        # outputs_info will look like [eois, mask, s_enc, b_enc, ..., y]
+        # outputs_info will look like [s_enc, b_enc, ..., y]
         return outputs_info
 
     def forward_pass(self, s_enc, b_enc):
@@ -304,6 +233,7 @@ class Decoder(BaseAbstraction):
         # To create an <EOS> index vector (eosi) the time index is needed.
         # Use `arange` to generate a vector with all the time indexes. The
         # `scan` may finish before because the `until` condition becomes true.
+        # TODO: simplify this and consider making maxlength an argument
         time_seq = T.arange(0, self._maxlength)
         time_seq.name = 'time'
 
@@ -314,13 +244,10 @@ class Decoder(BaseAbstraction):
             name='sutskever_decoder'
         )
 
-        eosi = outputs[0][-1, :]
-
         # The scan output have the shape (time, dims, observations)
-        log_y = outputs[-2].transpose(1, 2, 0)
         y = outputs[-1].transpose(1, 2, 0)
 
-        return (eosi, log_y, y)
+        return y
 
 
 class SutskeverDecoder(Decoder, OptimizerAbstraction):
@@ -339,9 +266,3 @@ class SutskeverDecoder(Decoder, OptimizerAbstraction):
         # Use the hidden input as the cell input too if it is a LSTM layer
         s_enc = b_enc if isinstance(self._layers[1], LSTM) else None
         return Decoder.forward_pass(self, s_enc, b_enc)
-
-    def _preloss_scanner(self, *args, **kwargs):
-        return SutskeverNetwork._preloss_scanner(self, *args, **kwargs)
-
-    def _preloss(self, *args, **kwargs):
-        return SutskeverNetwork._preloss(self, *args, **kwargs)
