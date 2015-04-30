@@ -25,3 +25,32 @@ def count(items, T=8, classes=5):
         t.astype('int32'),
         classes + 1
     )
+
+def floor(items, classes=9):
+    # Create initial value
+    X = np.random.uniform(1, classes + 1, size=(items, 1))
+
+    # Create targe by incrementing
+    t = np.zeros((items, 2))
+    t[:, 0] = np.floor(X[:, 0])
+
+    return Dataset(
+        X.astype('float32'),
+        t.astype('int32'),
+        classes + 1
+    )
+
+def memorize(items, classes=9):
+    # Create initial value
+    X = np.random.randint(1, classes + 1, size=(items, 1))
+
+    # Create targe by incrementing
+    t = np.zeros((items, 10))
+    for i, x_i in enumerate(X[:, 0]):
+        t[i, 0:x_i] = np.arange(1, x_i + 1)
+
+    return Dataset(
+        X.astype('float32'),
+        t.astype('int32'),
+        classes + 1
+    )
