@@ -6,6 +6,7 @@ import os.path as path
 import sys
 import os
 
+import progressbar
 import matplotlib as mpl
 if (os.environ.get('DISPLAY') is None): mpl.use('Agg')
 import matplotlib.pyplot as plt
@@ -51,8 +52,13 @@ def classifier(model, generator, y_shape, performance, epochs=100, asserts=True,
 
     train_error = np.zeros(epochs)
     test_error = np.zeros(epochs)
-    for i in range(0, epochs):
-        if (plot): print('  running train epoch %d' % i)
+
+    if (not plot): print()
+    progress = progressbar.ProgressBar(widgets=[
+        'Training: ', progressbar.Bar(),
+        progressbar.Percentage(), ' | ', progressbar.ETA()
+    ])
+    for i in progress(range(0, epochs)):
         train_error[i] = model.train(*train_dataset)
         test_error[i] = model.test(*test_dataset)
 
