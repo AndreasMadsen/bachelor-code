@@ -76,9 +76,6 @@ class OptimizerAbstraction():
         # Check output is compatiabel with loss
         if (self._loss_layer._expect_log != self._output_layer._add_log):
             raise ValueError('loss layer and output layer did not agree on the log transform')
-        if (self._verbose):
-            if (not self._loss_layer._expect_log):
-                print('  NOTE: no log transform, this may be numerically unstable')
 
         # Create forward pass equations
         tick = get_tick()
