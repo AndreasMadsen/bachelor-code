@@ -43,7 +43,7 @@ for i, train_size in enumerate(TRAIN_SIZES):
     sutskever.reset_weights()
     data = dataset.network.count(train_size + TEST_SIZE)
 
-    run_results = run.simple_learn(sutskever, data, TEST_SIZE, EPOCHS)
+    run_results = run.batch_learn(sutskever, data, test_size=TEST_SIZE, epochs=EPOCHS)
 
     results['train_loss'][i] = run_results['train_loss'][-1]
     results['test_loss'][i] = run_results['test_loss'][-1]

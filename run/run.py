@@ -1,9 +1,16 @@
+
 import warnings
 import os.path as path
 import sys
 import os
+
+thisdir = path.dirname(path.realpath(__file__))
+sys.path.append(path.join(thisdir, '..'))
+
 import theano
 import numpy as np
+
+import neural
 
 np.random.seed(42)
 
@@ -16,8 +23,6 @@ warnings.filterwarnings(
     message='numpy.ndarray size changed, may indicate binary incompatibility'
 )
 
-thisdir = path.dirname(path.realpath(__file__))
-sys.path.append(path.join(thisdir, '..'))
 
 print('process pid: %d' % (os.getpid()))
 
@@ -38,7 +43,13 @@ def missclassification(model, test_dataset):
     (data, target) = test_dataset
     return np.mean(np.argmax(model.predict(data), axis=1) != target)
 
-def simple_learn(model, data, test_size, epochs, missclassification):
+def batch_learn(model, data, **kwargs):
+    return _learn(model, data, neural.learn.batch, **kwargs)
+
+def minibatch_learn(model, data, **kwargs):
+    return _learn(model, data, neural.learn.minibatch, **kwargs)
+
+def _learn(model, data, learning_method, test_size=100, epochs=100, **kwargs):
     # Use 1/3 as test data
     test_dataset = (data.data[0:test_size, :], data.target[0:test_size])
     train_dataset = (data.data[test_size:, :], data.target[test_size:])
@@ -52,16 +63,20 @@ def simple_learn(model, data, test_size, epochs, missclassification):
     train_miss = np.zeros(epochs)
     test_miss = np.zeros(epochs)
 
-    for i in range(0, epochs):
-        train_loss[i] = model.train(*train_dataset)
-        test_loss[i] = model.test(*test_dataset)
+    def on_epoch(model, epoch_i):
+        train_loss[epoch_i] = model.test(*train_dataset)
+        test_loss[epoch_i] = model.test(*test_dataset)
 
-        train_miss[i] = missclassification(model, train_dataset)
-        test_miss[i] = missclassification(model, test_dataset)
+        train_miss[epoch_i] = missclassification(model, train_dataset)
+        test_miss[epoch_i] = missclassification(model, test_dataset)
 
         print('  train: size %d, epoch %d, train loss %f, test miss: %f' % (
-            train_size, i, train_loss[i], test_miss[i]
+            train_size, epoch_i, train_loss[epoch_i], test_miss[epoch_i]
         ))
+
+    learning_method(model, train_dataset,
+                    on_epoch=on_epoch, epochs=epochs,
+                    **kwargs)
 
     return {
         'train_loss': train_loss,
