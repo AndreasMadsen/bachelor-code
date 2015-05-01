@@ -1,6 +1,6 @@
 
 import test
-from datasets import subset_vocal_sequence, count_network_sequence
+import dataset
 from nose.tools import *
 
 import numpy as np
@@ -11,12 +11,13 @@ import neural
 
 
 def _test_sutskever_network_count():
-    # TODO: debug errors caused by test_value
-    theano.config.compute_test_value = 'off'
+    def generator(items):
+        d = dataset.network.count(items)
+        return (d.data, d.target)
 
     sutskever = neural.network.Sutskever(eta=0.2, momentum=0.3, max_output_size=9, verbose=True)
     # Setup theano tap.test_value
-    sutskever.test_value(*count_network_sequence(10))
+    sutskever.test_value(*generator(10))
 
     # Setup layers
     sutskever.set_encoder_input(neural.layer.Input(2))
@@ -25,38 +26,35 @@ def _test_sutskever_network_count():
     sutskever.set_decoder_input(neural.layer.Input(6))
     sutskever.push_decoder_layer(neural.layer.LSTM(2))
     sutskever.push_decoder_layer(neural.layer.LSTM(80))
-    sutskever.push_decoder_layer(neural.layer.Softmax(6, log=True))
+    sutskever.push_decoder_layer(neural.layer.Softmax(6))
 
     # Setup loss function
-    sutskever.set_loss(neural.loss.NaiveEntropy(log=True))
+    sutskever.set_loss(neural.loss.NaiveEntropy())
 
     # Compile train, test and predict functions
     sutskever.compile()
 
     test.classifier(
-        sutskever, count_network_sequence,
+        sutskever, generator,
         y_shape=(100, 6, 15), performance=0.6, asserts=False, plot=True, save=True,
         epochs=4000
     )
 
-    (x, t) = count_network_sequence(10)
+    (x, t) = generator(10)
     y = sutskever.predict(x)
 
     print(y)
     print(np.argmax(y, axis=1))
     print(t)
 
-    theano.config.compute_test_value = 'warn'
-
-_test_sutskever_network_count()
-
 def _test_sutskever_network_filter():
-    # TODO: debug errors caused by test_value
-    theano.config.compute_test_value = 'off'
+    def generator(items):
+        d = dataset.network.vocal_subset(items)
+        return (d.data, d.target)
 
     sutskever = neural.network.Sutskever(eta=0.1, momentum=0.9, max_output_size=10)
     # Setup theano tap.test_value
-    test_value = subset_vocal_sequence(10)
+    test_value = generator(10)
     sutskever.test_value(*test_value)
 
     # Setup layers for a logistic classifier model
@@ -78,7 +76,7 @@ def _test_sutskever_network_filter():
     sutskever.compile()
 
     test.classifier(
-        sutskever, subset_vocal_sequence,
+        sutskever, generator,
         y_shape=(100, 4, 5), performance=0.6, asserts=False, plot=True,
         epochs=200
     )
@@ -91,7 +89,7 @@ def _test_sutskever_network_filter():
             )
         return strs
 
-    (x, t) = subset_vocal_sequence(10)
+    (x, t) = generator(10)
     y = sutskever.predict(x)
 
     print(y)
@@ -99,5 +97,3 @@ def _test_sutskever_network_filter():
     print(mat2str(np.argmax(x, axis=1)))
     print(mat2str(np.argmax(y, axis=1)))
     print(mat2str(t))
-
-    theano.config.compute_test_value = 'warn'

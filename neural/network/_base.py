@@ -29,6 +29,10 @@ class BaseAbstraction:
             layer.weights for layer in self._layers
         ]))
 
+    def reset_weights(self):
+        for layer in self._layers:
+            layer.reset_weights()
+
     def _outputs_info_list(self):
         """
         Generate a list of outputs for the forward scanner

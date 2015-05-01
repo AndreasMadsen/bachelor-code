@@ -53,4 +53,4 @@ def test_naive_entropy():
     y = T.tensor3('y')
     y.tag.test_value = np.dstack([y1, y2])
 
-    assert_equal(entropy.loss(y, t).tag.test_value, 3.1068553924560547)
+    assert_equal(entropy.loss(y, t).tag.test_value, 3.1068315505981445)

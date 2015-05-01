@@ -20,14 +20,14 @@ class LSTM(LayerAbstract):
         index = self.layer_index
 
         W01 = theano.shared(
-            np.random.randn(size[0], size[1] * 4).astype('float32'),
+            (0.5 * np.random.randn(size[0], size[1] * 4)).astype('float32'),
             name="W_h%d_h%d" % (index - 1, index),
             borrow=True
         )
         self.weights.append(W01)
 
         W11 = theano.shared(
-            np.random.randn(size[1], size[1] * 4).astype('float32'),
+            (0.5 * np.random.randn(size[1], size[1] * 4)).astype('float32'),
             name="W_h%d_h%d" % (index - 1, index),
             borrow=True
         )
@@ -79,7 +79,7 @@ class LSTM(LayerAbstract):
         b_h1_t = b_ω1_t * s_c1_t
 
         # If mask value is 1, return the results from previous iteration
-        # TODO: todo consider a more efficent way of doing this
+        # TODO: consider a more efficent way of doing this
         if (mask is not None):
             s_c1_t = s_c1_t * (1 - mask) + s_c1_tm1 * mask
             b_h1_t = b_h1_t * (1 - mask) + b_h1_tm1 * mask
