@@ -23,10 +23,5 @@ encoder.set_loss(neural.loss.NaiveEntropy(time=False, log=True))
 # Compile train, test and predict functions
 encoder.compile()
 
-def missclassification(model, test_dataset):
-    (data, target) = test_dataset
-    return np.mean(np.argmax(model.predict(data), axis=1) != target)
-
-results = run.simple_learn(encoder, data, 100, 500, missclassification)
-
+results = run.simple_learn(encoder, data, 100, 500)
 np.savez_compressed(run.output_file, **results)

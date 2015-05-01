@@ -27,11 +27,6 @@ sutskever.set_loss(neural.loss.NaiveEntropy(log=True))
 # Compile train, test and predict functions
 sutskever.compile()
 
-# TODO: this will not work when T(y) != T(t)
-def missclassification(model, test_dataset):
-    (data, target) = test_dataset
-    return np.mean(np.argmax(model.predict(data), axis=1) != target)
-
 results = {
     'train_loss': np.zeros(len(TRAIN_SIZES)),
     'test_loss': np.zeros(len(TRAIN_SIZES)),
@@ -48,7 +43,7 @@ for i, train_size in enumerate(TRAIN_SIZES):
     sutskever.reset_weights()
     data = dataset.network.count(train_size + TEST_SIZE)
 
-    run_results = run.simple_learn(sutskever, data, TEST_SIZE, EPOCHS, missclassification)
+    run_results = run.simple_learn(sutskever, data, TEST_SIZE, EPOCHS)
 
     results['train_loss'][i] = run_results['train_loss'][-1]
     results['test_loss'][i] = run_results['test_loss'][-1]

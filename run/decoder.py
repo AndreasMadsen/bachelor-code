@@ -24,15 +24,7 @@ decoder.set_loss(neural.loss.NaiveEntropy())
 # Compile train, test and predict functions
 decoder.compile()
 
-# TODO: this will not work when T(y) != T(t)
-def missclassification(model, test_dataset):
-    (data, target) = test_dataset
-    pred = np.argmax(model.predict(data), axis=1)
-
-    return np.mean(pred != target)
-
-results = run.simple_learn(decoder, data, 100, 1000, missclassification)
-
+results = run.simple_learn(decoder, data, 100, 1000)
 np.savez_compressed(run.output_file, **results)
 
 # show example

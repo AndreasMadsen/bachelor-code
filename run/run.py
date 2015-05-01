@@ -33,7 +33,11 @@ run_name = (os.environ.get('OUTNAME')
             else str(os.getpid()))
 output_file = path.join(thisdir, '..', 'outputs', run_name + '.npz')
 
-#
+# Simple batch learning
+def missclassification(model, test_dataset):
+    (data, target) = test_dataset
+    return np.mean(np.argmax(model.predict(data), axis=1) != target)
+
 def simple_learn(model, data, test_size, epochs, missclassification):
     # Use 1/3 as test data
     test_dataset = (data.data[0:test_size, :], data.target[0:test_size])

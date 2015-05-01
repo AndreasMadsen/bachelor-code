@@ -169,7 +169,7 @@ class Decoder(BaseAbstraction):
         self._input = x_input
         self._maxlength = maxlength
 
-    def _forward_scanner(self, t, *args):
+    def _forward_scanner(self, *args):
         """
         Defines the forward equations for each time step.
         """
@@ -230,16 +230,9 @@ class Decoder(BaseAbstraction):
         """
         Setup equations for the forward pass
         """
-        # To create an <EOS> index vector (eosi) the time index is needed.
-        # Use `arange` to generate a vector with all the time indexes. The
-        # `scan` may finish before because the `until` condition becomes true.
-        # TODO: simplify this and consider making maxlength an argument
-        time_seq = T.arange(0, self._maxlength)
-        time_seq.name = 'time'
-
         outputs, _ = theano.scan(
             fn=self._forward_scanner,
-            sequences=[time_seq],
+            n_steps=self._maxlength,
             outputs_info=self._outputs_info_list(s_enc, b_enc),
             name='sutskever_decoder'
         )

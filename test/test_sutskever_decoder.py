@@ -53,8 +53,7 @@ def test_sutskever_decoder_fast():
     y = decoder.forward_pass(b_input)
 
     # Check that the gradient can be calculated
-    # TODO: debug errors caused by test_value
-    # T.grad(T.sum(y), weights)
+    T.grad(T.sum(y), weights)
 
     # Assert output
     assert_equal(y.tag.test_value.shape, (2, 3, 2))
