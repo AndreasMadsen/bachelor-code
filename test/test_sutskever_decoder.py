@@ -77,7 +77,7 @@ def _test_sutskever_decoder_train():
         d = dataset.decoder.count(items)
         return (d.data, d.target)
 
-    decoder = neural.network.SutskeverDecoder(eta=0.1, momentum=0.0, maxlength=9, verbose=True)
+    decoder = neural.network.SutskeverDecoder(maxlength=9, verbose=True)
     # Setup theano tap.test_value
     decoder.test_value(*generator(10))
 
@@ -96,7 +96,7 @@ def _test_sutskever_decoder_train():
     test.classifier(
         decoder, generator,
         y_shape=(100, 6, 9), performance=0.8, plot=True, asserts=False,
-        epochs=1000
+        epochs=1000, learning_rate=0.1, momentum=0.0
     )
 
     (b_enc, t) = generator(10)

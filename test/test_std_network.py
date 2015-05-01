@@ -10,7 +10,7 @@ def test_logistic_classifier():
         d = dataset.network.quadrant(items)
         return (d.data, d.target)
 
-    logistic = neural.network.Std(eta=0.4, momentum=0.9)
+    logistic = neural.network.Std()
     # Setup theano tap.test_value
     logistic.test_value(*generator(10))
 
@@ -26,7 +26,8 @@ def test_logistic_classifier():
 
     test.classifier(
         logistic, generator,
-        y_shape=(100, 4, 5), performance=0.6
+        y_shape=(100, 4, 5), performance=0.6,
+        epochs=100, learning_rate=0.4, momentum=0.9
     )
 
 def test_rnn_classifier():
@@ -34,7 +35,7 @@ def test_rnn_classifier():
         d = dataset.network.quadrant_cumsum(items)
         return (d.data, d.target)
 
-    rnn = neural.network.Std(eta=0.2, momentum=0.5)
+    rnn = neural.network.Std()
     # Setup theano tap.test_value
     rnn.test_value(*generator(10))
 
@@ -52,7 +53,7 @@ def test_rnn_classifier():
     test.classifier(
         rnn, generator,
         y_shape=(100, 4, 5), performance=0.6,
-        epochs=800
+        epochs=800, learning_rate=0.2, momentum=0.5
     )
 
 def test_lstm_classifier():
@@ -60,7 +61,7 @@ def test_lstm_classifier():
         d = dataset.network.quadrant_cumsum(items)
         return (d.data, d.target)
 
-    lstm = neural.network.Std(eta=0.3, momentum=0.5)
+    lstm = neural.network.Std()
     # Setup theano tap.test_value
     lstm.test_value(*generator(10))
 
@@ -78,5 +79,5 @@ def test_lstm_classifier():
     test.classifier(
         lstm, generator,
         y_shape=(100, 4, 5), performance=0.6,
-        epochs=1000
+        epochs=1000, learning_rate=0.3, momentum=0.5
     )

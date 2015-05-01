@@ -74,7 +74,7 @@ def test_sutskever_encoder_train():
         d = dataset.encoder.mode(items)
         return (d.data, d.target)
 
-    encoder = neural.network.SutskeverEncoder(eta=0.05, momentum=0.04)
+    encoder = neural.network.SutskeverEncoder()
     # Setup theano tap.test_value
     encoder.test_value(*generator(10))
 
@@ -92,5 +92,5 @@ def test_sutskever_encoder_train():
     test.classifier(
         encoder, generator,
         y_shape=(100, 10), performance=0.8, asserts=True,
-        epochs=600
+        epochs=600, learning_rate=0.05, momentum=0.04
     )

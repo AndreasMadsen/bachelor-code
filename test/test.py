@@ -43,7 +43,9 @@ if (not is_optimize and not is_HPC):
 if (theano.config.optimizer != 'None'):
     print('Theano optimizer enabled')
 
-def classifier(model, generator, y_shape, performance, epochs=100, asserts=True, plot=False):
+def classifier(model, generator, y_shape, performance,
+               epochs=100, learning_rate=0.1, momentum=0.9,
+               asserts=True, plot=False):
     if (plot): print('testing classifier')
 
     # Setup dataset and train model
@@ -59,7 +61,9 @@ def classifier(model, generator, y_shape, performance, epochs=100, asserts=True,
         progressbar.Percentage(), ' | ', progressbar.ETA()
     ])
     for i in progress(range(0, epochs)):
-        train_error[i] = model.train(*train_dataset)
+        train_error[i] = model.train(*train_dataset,
+                                     learning_rate=learning_rate,
+                                     momentum=momentum)
         test_error[i] = model.test(*test_dataset)
 
     if (plot):
