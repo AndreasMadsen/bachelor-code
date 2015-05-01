@@ -43,7 +43,7 @@ if (not is_optimize and not is_HPC):
 if (theano.config.optimizer != 'None'):
     print('Theano optimizer enabled')
 
-def classifier(model, generator, y_shape, performance, epochs=100, asserts=True, plot=False, save=False):
+def classifier(model, generator, y_shape, performance, epochs=100, asserts=True, plot=False):
     if (plot): print('testing classifier')
 
     # Setup dataset and train model

@@ -1,14 +1,18 @@
 
 import test
-from datasets import quadrant_classify, quadrant_cumsum_classify
+import dataset
 from nose.tools import *
 
 import neural
 
 def test_logistic_classifier():
+    def generator(items):
+        d = dataset.network.quadrant(items)
+        return (d.data, d.target)
+
     logistic = neural.network.Std(eta=0.4, momentum=0.9)
     # Setup theano tap.test_value
-    logistic.test_value(*quadrant_classify(10))
+    logistic.test_value(*generator(10))
 
     # Setup layers for a logistic classifier model
     logistic.set_input(neural.layer.Input(2))
@@ -21,14 +25,18 @@ def test_logistic_classifier():
     logistic.compile()
 
     test.classifier(
-        logistic, quadrant_classify,
+        logistic, generator,
         y_shape=(100, 4, 5), performance=0.6
     )
 
 def test_rnn_classifier():
+    def generator(items):
+        d = dataset.network.quadrant_cumsum(items)
+        return (d.data, d.target)
+
     rnn = neural.network.Std(eta=0.2, momentum=0.5)
     # Setup theano tap.test_value
-    rnn.test_value(*quadrant_cumsum_classify(10))
+    rnn.test_value(*generator(10))
 
     # Setup layers for a recurent classifier model
     rnn.set_input(neural.layer.Input(2))
@@ -42,15 +50,19 @@ def test_rnn_classifier():
     rnn.compile()
 
     test.classifier(
-        rnn, quadrant_cumsum_classify,
+        rnn, generator,
         y_shape=(100, 4, 5), performance=0.6,
         epochs=800
     )
 
 def test_lstm_classifier():
+    def generator(items):
+        d = dataset.network.quadrant_cumsum(items)
+        return (d.data, d.target)
+
     lstm = neural.network.Std(eta=0.3, momentum=0.5)
     # Setup theano tap.test_value
-    lstm.test_value(*quadrant_cumsum_classify(10))
+    lstm.test_value(*generator(10))
 
     # Setup layers for a recurent classifier model
     lstm.set_input(neural.layer.Input(2))
@@ -64,7 +76,7 @@ def test_lstm_classifier():
     lstm.compile()
 
     test.classifier(
-        lstm, quadrant_cumsum_classify,
+        lstm, generator,
         y_shape=(100, 4, 5), performance=0.6,
         epochs=1000
     )
