@@ -2,24 +2,12 @@
 import os.path as path
 import os
 import numpy as np
-
 from sklearn.datasets import fetch_mldata
+
+from dataset._shared import Dataset, index_to_indicator
 
 thisdir = path.dirname(path.realpath(__file__))
 data_dir = path.join(thisdir, 'data')
-
-class Dataset():
-    def __init__(self, data, target, classes):
-        self.data = data
-        self.target = target
-        self.n_classes = classes
-
-def _index_to_indicator(matrix, maxIndex):
-    shape = matrix.shape
-    tensor = np.zeros((shape[0], maxIndex, shape[1]), dtype='float32')
-    (obs, time) = np.mgrid[0:shape[0], 0:shape[1]]
-    tensor[obs, matrix, time] = 1
-    return tensor
 
 def mnist():
     data = fetch_mldata('MNIST original', data_home=data_dir)
@@ -52,4 +40,4 @@ def mode(items, Tmin=17, Tmax=20):
         stop = np.random.randint(Tmin, Tmax)
         X[i, stop:] = 0
 
-    return Dataset(_index_to_indicator(X, 10), t, maxIndex)
+    return Dataset(index_to_indicator(X, 10), t, maxIndex)

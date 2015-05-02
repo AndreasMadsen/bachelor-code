@@ -1,11 +1,6 @@
 
 import numpy as np
-
-class Dataset():
-    def __init__(self, data, target, classes):
-        self.data = data
-        self.target = target
-        self.n_classes = classes
+from dataset._shared import Dataset
 
 def count(items, T=8, classes=5):
     # Create initial value
