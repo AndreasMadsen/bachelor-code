@@ -51,8 +51,8 @@ def minibatch_learn(model, data, **kwargs):
 
 def _learn(model, data, learning_method, test_size=100, epochs=100, **kwargs):
     # Use 1/3 as test data
-    test_dataset = (data.data[0:test_size, :], data.target[0:test_size])
-    train_dataset = (data.data[test_size:, :], data.target[test_size:])
+    test_dataset = (data.data[0:test_size], data.target[0:test_size])
+    train_dataset = (data.data[test_size:], data.target[test_size:])
 
     print('learning model')
     train_size = train_dataset[0].shape[0]

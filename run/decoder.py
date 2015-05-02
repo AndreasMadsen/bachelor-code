@@ -6,7 +6,7 @@ import numpy as np
 import dataset
 import neural
 
-data = dataset.decoder.memorize(300)
+data = dataset.decoder.count(11 * 128)
 
 decoder = neural.network.SutskeverDecoder(
     maxlength=data.target.shape[1], verbose=True
@@ -24,8 +24,8 @@ decoder.set_loss(neural.loss.NaiveEntropy())
 # Compile train, test and predict functions
 decoder.compile()
 
-results = run.batch_learn(decoder, data, test_size=100, epochs=1000,
-                          learning_rate=0.05, momentum=0.0)
+results = run.minibatch_learn(decoder, data, test_size=128, epochs=1000,
+                              learning_rate=0.07, momentum=0.2)
 np.savez_compressed(run.output_file, **results)
 
 # show example
