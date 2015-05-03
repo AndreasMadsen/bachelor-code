@@ -2,27 +2,13 @@
 import os.path as path
 import os
 import numpy as np
-from sklearn.datasets import fetch_mldata
 
 from dataset._shared import Dataset, index_to_indicator
 
 thisdir = path.dirname(path.realpath(__file__))
 data_dir = path.join(thisdir, 'data')
 
-def mnist():
-    data = fetch_mldata('MNIST original', data_home=data_dir)
-    shuffle = np.random.permutation(data.data.shape[0])
-
-    obs = data.data.shape[0]
-    time = data.data.shape[1]
-
-    return Dataset(
-        (data.data / 255.0).reshape(obs, 1, time).astype('float32')[shuffle, :],
-        data.target.astype('int32')[shuffle],
-        np.unique(data.target).size
-    )
-
-def mode(items, Tmin=17, Tmax=20):
+def mode(items, Tmin=17, Tmax=20, indexed=False):
     maxIndex = 10
 
     t = np.random.randint(1, maxIndex, size=(items, )).astype('int32')
@@ -40,4 +26,7 @@ def mode(items, Tmin=17, Tmax=20):
         stop = np.random.randint(Tmin, Tmax)
         X[i, stop:] = 0
 
-    return Dataset(index_to_indicator(X, 10), t, maxIndex)
+    if (indexed):
+        return Dataset(X, t, maxIndex)
+    else:
+        return Dataset(index_to_indicator(X, 10), t, maxIndex)

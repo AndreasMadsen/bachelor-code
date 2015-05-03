@@ -40,13 +40,20 @@ class RNN(LayerAbstract):
             Wb = 0
 
         def forward(b_h0_t, b_h1_tm1):
-            return T.dot(b_h0_t, W01) + T.dot(b_h1_tm1, W11) + Wb
+            if (self.indexed_input):
+                a_1_t = W01[b_h0_t, :] + T.dot(b_h1_tm1, W11) + Wb
+            else:
+                a_1_t = T.dot(b_h0_t, W01) + T.dot(b_h1_tm1, W11) + Wb
+
+            b_1_t = T.nnet.sigmoid(a_1_t)
+            return b_1_t
 
         return forward
 
     def setup(self, batch_size, layer_index, prev_layer):
         self.layer_index = layer_index
         self.input_size = prev_layer.output_size
+        self.indexed_input = prev_layer.indexed
 
         self._forward = self._rnn_input_unit()
 
@@ -56,8 +63,7 @@ class RNN(LayerAbstract):
         self.outputs_info.append(b_h_tm1)
 
     def scanner(self, b_h0_t, b_h1_tm1, mask=None):
-        a_h1_t = self._forward(b_h0_t, b_h1_tm1)
-        b_h1_t = T.nnet.sigmoid(a_h1_t)
+        b_h1_t = self._forward(b_h0_t, b_h1_tm1)
 
         # If mask value is 1, return the results from previous iteration
         # TODO: consider a more efficent way of doing this

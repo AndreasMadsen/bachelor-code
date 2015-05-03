@@ -17,15 +17,14 @@ class SutskeverNetwork(OptimizerAbstraction):
     Abstraction for creating recurent neural networks
     """
 
-    def __init__(self, max_output_size=100, **kwargs):
+    def __init__(self, indexed_input=False, max_output_size=100, **kwargs):
         OptimizerAbstraction.__init__(self, **kwargs)
 
-        # TODO: reconsider input type, use int32 instead of flaot32
-        self._input = T.tensor3('x')
+        self._input = T.imatrix('x') if indexed_input else T.tensor3('x')
         self._target = T.imatrix('t')
 
         # encoder -> decoder
-        self._encoder = Encoder(self._input)
+        self._encoder = Encoder(self._input, indexed_input=indexed_input)
         self._decoder = Decoder(self._input, maxlength=max_output_size)
 
     def test_value(self, x, t):
@@ -82,10 +81,11 @@ class Encoder(BaseAbstraction):
     This implementation also uses a vector, indicate when the sequences starts
     relative to the other sequences in the minibatch.
     """
-    def __init__(self, x_input, **kwargs):
+    def __init__(self, x_input, indexed_input=False, **kwargs):
         BaseAbstraction.__init__(self, **kwargs)
         # self._input is only used by the layers, to infer the batch size.
         self._input = x_input
+        self._indexed_input = indexed_input
 
     def _forward_scanner(self, x_t, *args):
         """
@@ -98,8 +98,12 @@ class Encoder(BaseAbstraction):
         curr = 0
         prev_output = x_t
 
-        # Mask the inputs
-        mask = T.eq(x_t[:, 0], 1).dimshuffle((0, 'x'))  # is <EOF>
+        # Mask the inputs # is <EOF>
+        if (self._indexed_input):
+            mask = T.eq(x_t, 0)
+        else:
+            mask = T.eq(x_t[:, 0], 1)
+        mask = mask.dimshuffle((0, 'x'))
 
         # Loop though each layer and apply send the previous layers output
         # to the next layer. The layer can have additional paramers, if
@@ -126,7 +130,8 @@ class Encoder(BaseAbstraction):
         outputs, _ = theano.scan(
             fn=self._forward_scanner,
             sequences=[
-                x.transpose(2, 0, 1)  # iterate (time), row (observations), col (dims)
+                x.transpose(1, 0) if self._indexed_input  # iterate (time), col (observations)
+                else x.transpose(2, 0, 1)  # iterate (time), row (observations), col (dims)
             ],
             outputs_info=self._outputs_info_list(),
             name='sutskever_encoder'
@@ -142,11 +147,11 @@ class Encoder(BaseAbstraction):
             return (None, b_enc[-1, :, :])
 
 class SutskeverEncoder(Encoder, OptimizerAbstraction):
-    def __init__(self, **kwargs):
-        self._input = T.tensor3('x')
+    def __init__(self, indexed_input=False, **kwargs):
+        self._input = T.imatrix('x') if indexed_input else T.tensor3('x')
         self._target = T.ivector('t')
 
-        Encoder.__init__(self, self._input, **kwargs)
+        Encoder.__init__(self, self._input, indexed_input=indexed_input, **kwargs)
         OptimizerAbstraction.__init__(self, **kwargs)
 
     def _preloss(self, s_enc, y, t):

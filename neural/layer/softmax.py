@@ -15,6 +15,7 @@ class Softmax(LayerAbstract):
     def setup(self, batch_size, layer_index, prev_layer):
         self.layer_index = layer_index
         self.input_size = prev_layer.output_size
+        self.indexed_input = prev_layer.indexed
 
         self._W_h0_h1 = theano.shared(
             (0.5 * np.random.randn(self.input_size, self.output_size)).astype('float32'),
@@ -37,7 +38,10 @@ class Softmax(LayerAbstract):
         self.outputs_info.append(None)
 
     def scanner(self, b_h0_t, mask=None):
-        a_h1_t = T.dot(b_h0_t, self._W_h0_h1) + self._W_b0_h1
+        if (self.indexed_input):
+            a_h1_t = self._W_h0_h1[b_h0_t, :] + self._W_b0_h1
+        else:
+            a_h1_t = T.dot(b_h0_t, self._W_h0_h1) + self._W_b0_h1
 
         if (self._add_log):
             diff = a_h1_t - T.max(a_h1_t, axis=1, keepdims=True)

@@ -44,7 +44,11 @@ class LSTM(LayerAbstract):
             Wb = 0
 
         def forward(b_h0_t, b_h1_tm1):
-            a_1_t = T.dot(b_h0_t, W01) + T.dot(b_h1_tm1, W11) + Wb
+            if (self.indexed_input):
+                a_1_t = W01[b_h0_t, :] + T.dot(b_h1_tm1, W11) + Wb
+            else:
+                a_1_t = T.dot(b_h0_t, W01) + T.dot(b_h1_tm1, W11) + Wb
+
             b_1_t = T.nnet.sigmoid(a_1_t)
             return b_1_t
 
@@ -53,6 +57,7 @@ class LSTM(LayerAbstract):
     def setup(self, batch_size, layer_index, prev_layer):
         self.layer_index = layer_index
         self.input_size = prev_layer.output_size
+        self.indexed_input = prev_layer.indexed
 
         self._forward = self._lstm_input_units()
 

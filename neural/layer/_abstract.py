@@ -5,6 +5,7 @@ class LayerAbstract:
     def __init__(self, *args, **kwargs):
         self.weights = []
         self.outputs_info = []
+        self.indexed = False
 
     def reset_weights(self):
         for weight in self.weights:
