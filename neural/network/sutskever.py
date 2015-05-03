@@ -20,6 +20,7 @@ class SutskeverNetwork(OptimizerAbstraction):
     def __init__(self, max_output_size=100, **kwargs):
         OptimizerAbstraction.__init__(self, **kwargs)
 
+        # TODO: reconsider input type, use int32 instead of flaot32
         self._input = T.tensor3('x')
         self._target = T.imatrix('t')
 
