@@ -39,9 +39,8 @@ run_name = (os.environ.get('OUTNAME')
 output_file = path.join(thisdir, '..', 'outputs', run_name + '.npz')
 
 # Simple batch learning
-def missclassification(model, test_dataset):
-    (data, target) = test_dataset
-    return np.mean(np.argmax(model.predict(data), axis=1) != target)
+def missclassification(model, data):
+    return np.mean(np.argmax(model.predict(data.data), axis=1) != data.target)
 
 def batch_learn(model, data, **kwargs):
     return _learn(model, data, neural.learn.batch, **kwargs)
@@ -51,11 +50,11 @@ def minibatch_learn(model, data, **kwargs):
 
 def _learn(model, data, learning_method, test_size=100, epochs=100, **kwargs):
     # Use 1/3 as test data
-    test_dataset = (data.data[0:test_size], data.target[0:test_size])
-    train_dataset = (data.data[test_size:], data.target[test_size:])
+    test_dataset = data.range(0, test_size)
+    train_dataset = data.range(test_size, None)
 
     print('learning model')
-    train_size = train_dataset[0].shape[0]
+    train_size = train_dataset.observations
 
     train_loss = np.zeros(epochs)
     test_loss = np.zeros(epochs)
@@ -64,8 +63,8 @@ def _learn(model, data, learning_method, test_size=100, epochs=100, **kwargs):
     test_miss = np.zeros(epochs)
 
     def on_epoch(model, epoch_i):
-        train_loss[epoch_i] = model.test(*train_dataset)
-        test_loss[epoch_i] = model.test(*test_dataset)
+        train_loss[epoch_i] = model.test(*train_dataset.astuple())
+        test_loss[epoch_i] = model.test(*test_dataset.astuple())
 
         train_miss[epoch_i] = missclassification(model, train_dataset)
         test_miss[epoch_i] = missclassification(model, test_dataset)

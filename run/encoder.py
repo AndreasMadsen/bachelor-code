@@ -13,10 +13,10 @@ encoder = neural.network.SutskeverEncoder(verbose=True)
 # Setup layers
 encoder.set_input(neural.layer.Input(data.data.shape[1]))
 encoder.push_layer(neural.layer.LSTM(80))
-encoder.push_layer(neural.layer.Softmax(data.n_classes, log=True))
+encoder.push_layer(neural.layer.Softmax(data.n_classes))
 
 # Setup loss function
-encoder.set_loss(neural.loss.NaiveEntropy(time=False, log=True))
+encoder.set_loss(neural.loss.NaiveEntropy(time=False))
 
 # Compile train, test and predict functions
 encoder.compile()

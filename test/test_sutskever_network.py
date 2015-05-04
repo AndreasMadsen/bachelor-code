@@ -11,13 +11,9 @@ import neural
 
 
 def _test_sutskever_network_train():
-    def generator(items):
-        d = dataset.network.copy(items)
-        return (d.data, d.target)
-
     sutskever = neural.network.Sutskever(max_output_size=9, verbose=True)
     # Setup theano tap.test_value
-    sutskever.test_value(*generator(10))
+    sutskever.test_value(*dataset.network.copy(10).astuple())
 
     # Setup layers
     sutskever.set_encoder_input(neural.layer.Input(10))
@@ -36,7 +32,7 @@ def _test_sutskever_network_train():
     sutskever.compile()
 
     test.classifier(
-        sutskever, generator,
+        sutskever, dataset.network.copy,
         y_shape=(100, 6, 9), performance=0.8,
         trainer=neural.learn.minibatch, train_size=1280, plot=True, asserts=False,
         epochs=500, learning_rate=0.07, momentum=0.2

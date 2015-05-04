@@ -6,13 +6,9 @@ from nose.tools import *
 import neural
 
 def test_logistic_classifier():
-    def generator(items):
-        d = dataset.network.quadrant(items)
-        return (d.data, d.target)
-
     logistic = neural.network.Std()
     # Setup theano tap.test_value
-    logistic.test_value(*generator(10))
+    logistic.test_value(*dataset.network.quadrant(10).astuple())
 
     # Setup layers for a logistic classifier model
     logistic.set_input(neural.layer.Input(2))
@@ -25,19 +21,15 @@ def test_logistic_classifier():
     logistic.compile()
 
     test.classifier(
-        logistic, generator,
+        logistic, dataset.network.quadrant,
         y_shape=(100, 4, 5), performance=0.6,
         epochs=100, learning_rate=0.4, momentum=0.9
     )
 
 def test_rnn_classifier():
-    def generator(items):
-        d = dataset.network.quadrant_cumsum(items)
-        return (d.data, d.target)
-
     rnn = neural.network.Std()
     # Setup theano tap.test_value
-    rnn.test_value(*generator(10))
+    rnn.test_value(*dataset.network.quadrant_cumsum(10).astuple())
 
     # Setup layers for a recurent classifier model
     rnn.set_input(neural.layer.Input(2))
@@ -51,19 +43,15 @@ def test_rnn_classifier():
     rnn.compile()
 
     test.classifier(
-        rnn, generator,
+        rnn, dataset.network.quadrant_cumsum,
         y_shape=(100, 4, 5), performance=0.6,
         epochs=800, learning_rate=0.2, momentum=0.5
     )
 
 def test_lstm_classifier():
-    def generator(items):
-        d = dataset.network.quadrant_cumsum(items)
-        return (d.data, d.target)
-
     lstm = neural.network.Std()
     # Setup theano tap.test_value
-    lstm.test_value(*generator(10))
+    lstm.test_value(*dataset.network.quadrant_cumsum(10).astuple())
 
     # Setup layers for a recurent classifier model
     lstm.set_input(neural.layer.Input(2))
@@ -77,7 +65,7 @@ def test_lstm_classifier():
     lstm.compile()
 
     test.classifier(
-        lstm, generator,
+        lstm, dataset.network.quadrant_cumsum,
         y_shape=(100, 4, 5), performance=0.6,
         epochs=1000, learning_rate=0.3, momentum=0.5
     )

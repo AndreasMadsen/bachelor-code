@@ -122,13 +122,9 @@ def test_sutskever_encoder_indexed_fast():
     ]))
 
 def test_sutskever_encoder_float_train():
-    def generator(items):
-        d = dataset.encoder.mode(items)
-        return (d.data, d.target)
-
     encoder = neural.network.SutskeverEncoder()
     # Setup theano tap.test_value
-    encoder.test_value(*generator(10))
+    encoder.test_value(*dataset.encoder.mode(10).astuple())
 
     # Setup layers
     encoder.set_input(neural.layer.Input(10))
@@ -142,19 +138,18 @@ def test_sutskever_encoder_float_train():
     encoder.compile()
 
     test.classifier(
-        encoder, generator,
+        encoder, dataset.encoder.mode,
         y_shape=(100, 10), performance=0.8, asserts=True,
         epochs=600, learning_rate=0.05, momentum=0.04
     )
 
 def test_sutskever_encoder_indexed_train():
     def generator(items):
-        d = dataset.encoder.mode(items, indexed=True)
-        return (d.data, d.target)
+        return dataset.encoder.mode(items, indexed=True)
 
     encoder = neural.network.SutskeverEncoder(indexed_input=True)
     # Setup theano tap.test_value
-    encoder.test_value(*generator(10))
+    encoder.test_value(*generator(10).astuple())
 
     # Setup layers
     encoder.set_input(neural.layer.Input(10, indexed=True))

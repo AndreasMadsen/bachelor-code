@@ -69,8 +69,8 @@ def classifier(model, generator, y_shape, performance,
 
     def on_epoch(model, epoch_i):
         if (plot or epoch_i == 0 or epoch_i == (epochs - 1)):
-            train_error[epoch_i] = model.test(*train_dataset)
-            test_error[epoch_i] = model.test(*test_dataset)
+            train_error[epoch_i] = model.test(*train_dataset.astuple())
+            test_error[epoch_i] = model.test(*test_dataset.astuple())
 
         pbar.update(epoch_i + 1)
 
@@ -78,8 +78,8 @@ def classifier(model, generator, y_shape, performance,
     pbar.finish()
 
     # Calculate precition and missclassificationrate
-    y = model.predict(test_dataset[0])
-    misses = np.mean(np.argmax(y, axis=1) != test_dataset[1])
+    y = model.predict(test_dataset.data)
+    misses = np.mean(np.argmax(y, axis=1) != test_dataset.target)
 
     # Plot
     if (plot):
