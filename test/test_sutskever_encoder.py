@@ -2,11 +2,11 @@
 import test
 from nose.tools import *
 
-import dataset
 import numpy as np
 import theano
 import theano.tensor as T
 
+import dataset
 import neural
 
 def test_sutskever_encoder_float_fast():

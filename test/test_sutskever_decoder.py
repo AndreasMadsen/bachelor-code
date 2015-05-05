@@ -1,12 +1,12 @@
 
 import test
-import dataset
 from nose.tools import *
 
 import numpy as np
 import theano
 import theano.tensor as T
 
+import dataset
 import neural
 
 def test_sutskever_decoder_fast():

@@ -5,6 +5,7 @@ from nose.tools import *
 import numpy as np
 import theano
 import theano.tensor as T
+
 import neural
 
 def test_naive_entropy_log():

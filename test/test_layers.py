@@ -3,6 +3,7 @@ import test
 from nose.tools import *
 
 import numpy as np
+
 import neural
 
 def test_softmax_log_bias():

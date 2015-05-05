@@ -1,8 +1,8 @@
 
 import test
-import dataset
 from nose.tools import *
 
+import dataset
 import neural
 
 def test_logistic_classifier():
