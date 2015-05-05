@@ -29,9 +29,34 @@ class BaseAbstraction:
             layer.weights for layer in self._layers
         ]))
 
+    def count_weights(self):
+        """
+        Count how may weight matrices there are in the network.
+        """
+        return sum([len(layer.weights) for layer in self._layers])
+
     def reset_weights(self):
+        """
+        Will reinitialize all weights using a random number generator
+        """
         for layer in self._layers:
             layer.reset_weights()
+
+    def set_weights(self, new_weights):
+        """
+        Set weights using a list of numpy ndarrays
+        """
+        curr = 0
+        for layer in self._layers:
+            end = curr + len(layer.weights)
+            layer.set_weights(new_weights[curr:end])
+            curr += end
+
+    def get_weights(self):
+        """
+        Return all weights as a list of numpy ndarrays
+        """
+        return sum([layer.get_weights() for layer in self._layers], [])
 
     def _outputs_info_list(self):
         """

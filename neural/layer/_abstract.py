@@ -20,6 +20,13 @@ class LayerAbstract:
                 borrow=True
             )
 
+    def set_weights(self, new_weights):
+        for new_weight, weight in zip(new_weights, self.weights):
+            weight.set_value(new_weight, borrow=True)
+
+    def get_weights(self):
+        return [weight.get_value(borrow=True) for weight in self.weights]
+
     def infer_taps(self):
         taps = 0
 

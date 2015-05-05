@@ -58,6 +58,21 @@ class SutskeverNetwork(OptimizerAbstraction):
         self._decoder.reset_weights()
         self._encoder.reset_weights()
 
+    def set_weights(self, new_weights):
+        """
+        Set weights using a list of numpy ndarrays
+        """
+        count_weights = self._encoder.count_weights()
+
+        self._encoder.set_weights(new_weights[0:count_weights])
+        self._decoder.set_weights(new_weights[count_weights:])
+
+    def get_weights(self):
+        """
+        Return all weights as a list of numpy ndarrays
+        """
+        return self._encoder.get_weights() + self._decoder.get_weights()
+
     def forward_pass(self, x):
         (s_enc, b_enc) = self._encoder.forward_pass(x)
         y = self._decoder.forward_pass(s_enc, b_enc)
