@@ -34,6 +34,7 @@ def minibatch(model, train_dataset, on_epoch=None, max_time=None, epochs=100, **
         shuffle = np.random.permutation(train_dataset.observations)
         single_minibatch(model, train_dataset, shuffle, **kwargs)
         if (on_epoch is not None): on_epoch(model, epoch_i)
+        epoch_i += 1
 
         if (max_time is None):
             if (epoch_i >= epochs): break
@@ -41,5 +42,3 @@ def minibatch(model, train_dataset, on_epoch=None, max_time=None, epochs=100, **
             now = datetime.datetime.now()
             if ((now - start + (now - last)) >= max_time): break
             last = now
-
-        epoch_i += 1
