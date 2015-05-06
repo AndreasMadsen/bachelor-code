@@ -5,6 +5,10 @@ import json
 import unicodedata
 import re
 
+import numpy as np
+
+from dataset._shared import Dataset
+
 thisdir = path.dirname(path.realpath(__file__))
 json_file = path.join(thisdir, 'data', 'news.json.gz')
 
@@ -29,14 +33,14 @@ def preparse():
 
             all_text += text + title
 
-    unique_chars = ''.join(sorted(list(set(all_text))))
+    unique_chars = '\x00' + ''.join(sorted(list(set(all_text))))
 
     return (text_length, title_length, unique_chars)
 
 # This is a precomputed version of `preparse()`
 unique_chars = "\x00 !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ" \
                "[\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
-text_length = 48112
+text_length = 1003
 title_length = 197
 
 char_2_code = {c: i for i, c in enumerate(unique_chars)}
@@ -46,14 +50,15 @@ def str_to_code(str):
     # signed int8
     return np.asarray([char_2_code[c] for c in str + '\x00'], dtype='int8')
 
-def news():
+def build(items=None):
     data = []
     target = []
 
     with gzip.open(json_file, 'rt') as f:
-        for line in f:
+        for i, line in enumerate(f):
             article = json.loads(line)
-            data.append(str_to_code(normalize_string(article.text)))
-            target.append(str_to_code(normalize_string(article.title)))
+            data.append(str_to_code(normalize_string(article['text'])))
+            target.append(str_to_code(normalize_string(article['title'])))
+            if (items is not None and items >= i): break
 
-    return Dataset(data, target, len(unique_chars))
+    return Dataset(data, target, len(unique_chars), max_output_size=title_length)
