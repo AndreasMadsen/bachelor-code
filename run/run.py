@@ -41,7 +41,7 @@ output_file = path.join(thisdir, '..', 'outputs', run_name)
 # Simple batch learning
 def missclassification(model, data):
     (x, t) = data.astuple()
-    return np.mean(np.argmax(model.predict(x), axis=1) != t)
+    return np.mean(np.argmax(model.predict(x, max_output_size=t.shape[1]), axis=1) != t)
 
 def batch_learn(model, data, **kwargs):
     return _learn(model, data, neural.learn.batch, **kwargs)
@@ -49,41 +49,41 @@ def batch_learn(model, data, **kwargs):
 def minibatch_learn(model, data, **kwargs):
     return _learn(model, data, neural.learn.minibatch, **kwargs)
 
-def _learn(model, data, learning_method, test_size=100, epochs=100, **kwargs):
+def _learn(model, data, learning_method, test_size=100, **kwargs):
     # Use 1/3 as test data
     test_dataset = data.range(0, test_size)
+    train_sample = data.range(test_size, 2 * test_size)
     train_dataset = data.range(test_size, None)
 
     print('learning model')
     train_size = train_dataset.observations
 
-    train_loss = np.zeros(epochs)
-    test_loss = np.zeros(epochs)
+    train_loss = []
+    test_loss = []
 
-    train_miss = np.zeros(epochs)
-    test_miss = np.zeros(epochs)
+    train_miss = []
+    test_miss = []
 
     def on_epoch(model, epoch_i):
-        train_loss[epoch_i] = model.test(*train_dataset.astuple())
-        test_loss[epoch_i] = model.test(*test_dataset.astuple())
+        train_loss.append(model.test(*train_sample.astuple()))
+        test_loss.append(model.test(*test_dataset.astuple()))
 
-        train_miss[epoch_i] = missclassification(model, train_dataset)
-        test_miss[epoch_i] = missclassification(model, test_dataset)
+        train_miss.append(missclassification(model, train_sample))
+        test_miss.append(missclassification(model, test_dataset))
 
         print('  train: size %d, epoch %d, train loss %f, test miss: %f' % (
-            train_size, epoch_i, train_loss[epoch_i], test_miss[epoch_i]
+            train_size, epoch_i, train_loss[-1], test_miss[-1]
         ))
 
     learning_method(model, train_dataset,
-                    on_epoch=on_epoch, epochs=epochs,
-                    **kwargs)
+                    on_epoch=on_epoch, **kwargs)
 
     return {
-        'train_loss': train_loss,
-        'test_loss': test_loss,
+        'train_loss': np.asarray(train_loss),
+        'test_loss': np.asarray(test_loss),
 
-        'train_miss': train_miss,
-        'test_miss': test_miss,
+        'train_miss': np.asarray(train_miss),
+        'test_miss': np.asarray(test_miss),
 
         'n_classes': np.asarray([data.n_classes])
     }

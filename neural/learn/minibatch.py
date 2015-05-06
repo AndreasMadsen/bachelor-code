@@ -1,6 +1,7 @@
 
 import numpy as np
 import math
+import datetime
 
 def subselect(source, select):
     if (isinstance(source, list)):
@@ -25,9 +26,20 @@ def single_minibatch(model, train_dataset, shuffle,
         minibatch = train_dataset.select(minibatch_select).astuple()
         model.train(*minibatch, **kwargs)
 
-def minibatch(model, train_dataset, epochs=100, on_epoch=None, **kwargs):
-    for epoch_i in range(0, epochs):
+def minibatch(model, train_dataset, on_epoch=None, max_time=None, epochs=100, **kwargs):
+    epoch_i = 0
+    last = start = datetime.datetime.now()
+
+    while (True):
         shuffle = np.random.permutation(train_dataset.observations)
         single_minibatch(model, train_dataset, shuffle, **kwargs)
-
         if (on_epoch is not None): on_epoch(model, epoch_i)
+
+        if (max_time is None):
+            if (epoch_i >= epochs): break
+        else:
+            now = datetime.datetime.now()
+            if ((now - start + (now - last)) >= max_time): break
+            last = now
+
+        epoch_i += 1

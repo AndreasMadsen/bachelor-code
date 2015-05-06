@@ -1,6 +1,7 @@
 
 import run
 
+import datetime
 import numpy as np
 
 import dataset
@@ -30,7 +31,8 @@ sutskever.set_loss(neural.loss.NaiveEntropy())
 # Compile train, test and predict functions
 sutskever.compile()
 
-results = run.minibatch_learn(sutskever, data, test_size=1000, epochs=2,
+results = run.minibatch_learn(sutskever, data, test_size=1000,
+                              max_time=datetime.timedelta(minutes=5),
                               learning_rate=0.07, momentum=0.2)
 
 np.savez_compressed(run.output_file + '.epoch.npz', **results)
