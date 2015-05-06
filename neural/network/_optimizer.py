@@ -20,6 +20,8 @@ class OptimizerAbstraction():
         self._momentum = T.scalar('m')
         self._momentum.tag.test_value = 0.9
 
+        self._extra_params = []
+
         self._verbose = verbose
         self._loss_layer = None
 
@@ -107,7 +109,7 @@ class OptimizerAbstraction():
                 self._input, self._target,
                 theano.Param(self._learning_rate, default=0.1, name='learning_rate'),
                 theano.Param(self._momentum, default=0.9, name='momentum')
-            ],
+            ] + self._extra_params,
             outputs=[L],
             updates=self._update_functions(gW),
             name='train'
@@ -115,14 +117,14 @@ class OptimizerAbstraction():
         if (self._verbose): print('  compiled train function, took %d ms' % get_tock(tick))
         tick = get_tick()
         self._test = theano.function(
-            inputs=[self._input, self._target],
+            inputs=[self._input, self._target] + self._extra_params,
             outputs=[L],
             name='test'
         )
         if (self._verbose): print('  compiled error function, took %d ms' % get_tock(tick))
         tick = get_tick()
         self._predict = theano.function(
-            inputs=[self._input],
+            inputs=[self._input] + self._extra_params,
             outputs=[y],
             name='predict'
         )

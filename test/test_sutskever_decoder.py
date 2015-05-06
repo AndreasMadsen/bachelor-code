@@ -19,8 +19,8 @@ def test_sutskever_decoder_fast():
     b_input.tag.test_value = b_enc
 
     # Create encoder
-    decoder = neural.network.SutskeverDecoder(maxlength=2)
-    decoder.test_value(b_enc, None)
+    decoder = neural.network.SutskeverDecoder(max_output_size=2)
+    decoder.test_value(b_enc, np.zeros((2, 2)))
 
     # Setup layers
     decoder.set_input(neural.layer.Input(3))
@@ -73,7 +73,7 @@ def test_sutskever_decoder_fast():
     ]))
 
 def test_sutskever_decoder_train():
-    decoder = neural.network.SutskeverDecoder(maxlength=9)
+    decoder = neural.network.SutskeverDecoder(max_output_size=9)
     # Setup theano tap.test_value
     decoder.test_value(*dataset.decoder.count(10).astuple())
 

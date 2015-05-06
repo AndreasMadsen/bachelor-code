@@ -22,14 +22,19 @@ class SutskeverNetwork(OptimizerAbstraction):
 
         self._input = T.imatrix('x') if indexed_input else T.tensor3('x')
         self._target = T.imatrix('t')
+        self._maxlength = T.iscalar('Tmax')
+        self._extra_params = [
+            theano.Param(self._maxlength, default=max_output_size, name='max_output_size')
+        ]
 
         # encoder -> decoder
         self._encoder = Encoder(self._input, indexed_input=indexed_input)
-        self._decoder = Decoder(self._input, maxlength=max_output_size)
+        self._decoder = Decoder(self._input, self._maxlength)
 
     def test_value(self, x, t):
         self._input.tag.test_value = x
         self._target.tag.test_value = t
+        self._maxlength.tag.test_value = t.shape[1]
 
     def set_encoder_input(self, layer):
         self._encoder.set_input(layer)
@@ -86,6 +91,15 @@ class SutskeverNetwork(OptimizerAbstraction):
         assert(self._encoder._layers[-1].output_size == self._decoder._layers[+1].output_size)
 
         super().compile()
+
+    def train(self, x, t, **kwargs):
+        return OptimizerAbstraction.train(self, x, t, max_output_size=t.shape[1], **kwargs)
+
+    def test(self, x, t, **kwargs):
+        return OptimizerAbstraction.test(self, x, t, max_output_size=t.shape[1], **kwargs)
+
+    def predict(self, x, **kwargs):
+        return OptimizerAbstraction.predict(self, x, **kwargs)
 
 class Encoder(BaseAbstraction):
     """
@@ -184,7 +198,7 @@ class Decoder(BaseAbstraction):
     obtained by letting the hidden output of $t$ go into $t + 1$. The <EOF>
     tag signals when to stop.
     """
-    def __init__(self, x_input, maxlength=100, **kwargs):
+    def __init__(self, x_input, maxlength, **kwargs):
         BaseAbstraction.__init__(self, **kwargs)
         # self._input is only used by the layers, to infer the batch size.
         self._input = x_input
@@ -251,6 +265,9 @@ class Decoder(BaseAbstraction):
         """
         Setup equations for the forward pass
         """
+
+        # TODO: optimize maxlength depending on the target, such that it
+        # doesn't perform unnessarry time iterations.
         outputs, _ = theano.scan(
             fn=self._forward_scanner,
             n_steps=self._maxlength,
@@ -265,18 +282,31 @@ class Decoder(BaseAbstraction):
 
 
 class SutskeverDecoder(Decoder, OptimizerAbstraction):
-    def __init__(self, **kwargs):
-        self._input = T.matrix('b_enc')
-        self._target = T.imatrix('t')
-
-        Decoder.__init__(self, self._input, **kwargs)
+    def __init__(self, max_output_size=100, **kwargs):
+        # Decoder sets `_input` and `_maxlength`
+        Decoder.__init__(self, T.matrix('b_enc'), T.iscalar('Tmax'), **kwargs)
         OptimizerAbstraction.__init__(self, **kwargs)
+
+        self._target = T.imatrix('t')
+        self._extra_params = [
+            theano.Param(self._maxlength, default=max_output_size, name='max_output_size')
+        ]
 
     def test_value(self, x, t):
         self._input.tag.test_value = x
         self._target.tag.test_value = t
+        self._maxlength.tag.test_value = t.shape[1]
 
     def forward_pass(self, b_enc):
         # Use the hidden input as the cell input too if it is a LSTM layer
         s_enc = b_enc if isinstance(self._layers[1], LSTM) else None
         return Decoder.forward_pass(self, s_enc, b_enc)
+
+    def train(self, x, t, **kwargs):
+        return OptimizerAbstraction.train(self, x, t, max_output_size=t.shape[1], **kwargs)
+
+    def test(self, x, t, **kwargs):
+        return OptimizerAbstraction.test(self, x, t, max_output_size=t.shape[1], **kwargs)
+
+    def predict(self, x, **kwargs):
+        return OptimizerAbstraction.predict(self, x, **kwargs)
