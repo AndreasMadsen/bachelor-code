@@ -14,7 +14,7 @@ json_file = path.join(thisdir, 'data', 'news.json.gz')
 
 def normalize_string(text):
     text = unicodedata.normalize('NFKD', text)
-    return re.sub('[^\040-\176]', '', text)
+    return re.sub('([^\040-\176]|[#%&{}|~:;[\]^*+\-`<>])', '', text)
 
 def preparse():
     all_text = ""
@@ -38,9 +38,9 @@ def preparse():
     return (text_length, title_length, unique_chars)
 
 # This is a precomputed version of `preparse()`
-unique_chars = "\x00 !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ" \
-               "[\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
-text_length = 1003
+unique_chars = '\x00 !"$\'(),./0123456789=?@ABCDEFGHIJKLMNOPQRSTUVWXYZ' \
+               '\\_abcdefghijklmnopqrstuvwxyz'
+text_length = 999
 title_length = 197
 
 char_2_code = {c: i for i, c in enumerate(unique_chars)}
