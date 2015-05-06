@@ -23,4 +23,4 @@ encoder.compile()
 
 results = run.batch_learn(encoder, data, test_size=100, epochs=500,
                           learning_rate=0.05, momentum=0.2)
-np.savez_compressed(run.output_file, **results)
+np.savez_compressed(run.output_file + '.npz', **results)

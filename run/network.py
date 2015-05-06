@@ -30,7 +30,7 @@ sutskever.compile()
 
 results = run.minibatch_learn(sutskever, data, test_size=128, epochs=1000,
                               learning_rate=0.07, momentum=0.2)
-np.savez_compressed(run.output_file, **results)
+np.savez_compressed(run.output_file + '.npz', **results)
 
 # show example
 (b_enc, t) = (data.data[0:10, :], data.target[0:10, :])

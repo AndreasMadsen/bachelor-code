@@ -36,11 +36,12 @@ if (theano.config.optimizer == 'fast_run'):
 run_name = (os.environ.get('OUTNAME')
             if os.environ.get('OUTNAME') is not None
             else str(os.getpid()))
-output_file = path.join(thisdir, '..', 'outputs', run_name + '.npz')
+output_file = path.join(thisdir, '..', 'outputs', run_name)
 
 # Simple batch learning
 def missclassification(model, data):
-    return np.mean(np.argmax(model.predict(data.data), axis=1) != data.target)
+    (x, t) = data.astuple()
+    return np.mean(np.argmax(model.predict(x), axis=1) != t)
 
 def batch_learn(model, data, **kwargs):
     return _learn(model, data, neural.learn.batch, **kwargs)

@@ -50,4 +50,4 @@ for i, train_size in enumerate(TRAIN_SIZES):
     results['train_miss'][i] = run_results['train_miss'][-1]
     results['test_miss'][i] = run_results['test_miss'][-1]
 
-np.savez_compressed(run.output_file, **results)
+np.savez_compressed(run.output_file + '.npz', **results)
