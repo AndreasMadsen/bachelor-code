@@ -7,7 +7,9 @@ import numpy as np
 import dataset
 import neural
 
-data = dataset.news.build().range(0, 2000)
+np.random.seed(45)
+
+data = dataset.news.build()
 latent_size = 100
 print('dataset build')
 
@@ -32,7 +34,7 @@ sutskever.set_loss(neural.loss.NaiveEntropy())
 sutskever.compile()
 
 results = run.minibatch_learn(sutskever, data, test_size=1000,
-                              max_time=datetime.timedelta(minutes=5),
+                              max_time=datetime.timedelta(hours=23),
                               learning_rate=0.07, momentum=0.2)
 
 np.savez_compressed(run.output_file + '.epoch.npz', **results)
