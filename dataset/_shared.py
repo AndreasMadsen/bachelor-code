@@ -22,7 +22,8 @@ class Dataset():
             return Dataset(
                 [self.data[i] for i in selector],
                 [self.target[i] for i in selector],
-                self.n_classes
+                self.n_classes,
+                max_output_size=self.max_output_size
             )
         else:
             return Dataset(
