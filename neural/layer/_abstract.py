@@ -8,7 +8,7 @@ class LayerAbstract:
         self.indexed = False
 
     def _create_weights(self, *shape):
-        return 0.5 * np.random.randn(*shape).astype('float32')
+        return 0.1 * np.random.randn(*shape).astype('float32')
 
     def reset_weights(self):
         for weight in self.weights:
