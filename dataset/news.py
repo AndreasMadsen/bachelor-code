@@ -59,6 +59,6 @@ def build(items=None):
             article = json.loads(line)
             data.append(str_to_code(normalize_string(article['text'])))
             target.append(str_to_code(normalize_string(article['title'])))
-            if (items is not None and i >= items): break
+            if (items is not None and i + 1 >= items): break
 
     return Dataset(data, target, len(unique_chars), max_output_size=title_length)
