@@ -18,7 +18,7 @@ class Softmax(LayerAbstract):
         self.indexed_input = prev_layer.indexed
 
         self._W_h0_h1 = theano.shared(
-            (0.5 * np.random.randn(self.input_size, self.output_size)).astype('float32'),
+            self._create_weights(self.input_size, self.output_size),
             name="W_h%d_h%d" % (self.layer_index - 1, self.layer_index),
             borrow=True
         )

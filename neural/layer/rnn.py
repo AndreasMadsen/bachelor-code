@@ -16,14 +16,14 @@ class RNN(LayerAbstract):
         index = self.layer_index
 
         W01 = theano.shared(
-            (0.5 * np.random.randn(size[0], size[1])).astype('float32'),
+            self._create_weights(size[0], size[1]),
             name="W_h%d_h%d" % (index - 1, index),
             borrow=True
         )
         self.weights.append(W01)
 
         W11 = theano.shared(
-            (0.5 * np.random.randn(size[1], size[1])).astype('float32'),
+            self._create_weights(size[1], size[1]),
             name="W_h%d_h%d" % (index - 1, index),
             borrow=True
         )

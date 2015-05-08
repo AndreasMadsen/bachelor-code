@@ -7,6 +7,9 @@ class LayerAbstract:
         self.outputs_info = []
         self.indexed = False
 
+    def _create_weights(self, *shape):
+        return 0.5 * np.random.randn(*shape).astype('float32')
+
     def reset_weights(self):
         for weight in self.weights:
 
@@ -15,10 +18,7 @@ class LayerAbstract:
                 return_internal_type=True
             ).shape
 
-            weight.set_value(
-                np.random.randn(*shape).astype('float32'),
-                borrow=True
-            )
+            weight.set_value(self._create_weights(*shape), borrow=True)
 
     def set_weights(self, new_weights):
         for new_weight, weight in zip(new_weights, self.weights):
