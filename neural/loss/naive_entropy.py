@@ -23,5 +23,4 @@ class NaiveEntropy:
             # y is acutally log(y), likely calculated by Softmax(log=True)
             return - T.mean(y[T.arange(0, y.shape[0]), t])
         else:
-            loss = T.mean(T.nnet.categorical_crossentropy(y + 1e-5, t))
-            return loss
+            return T.mean(T.nnet.categorical_crossentropy(y + 1e-7, t))
