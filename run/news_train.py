@@ -7,8 +7,6 @@ import numpy as np
 import dataset
 import neural
 
-np.random.seed(45)
-
 data = dataset.news.build()
 latent_size = 100
 print('dataset build')
@@ -19,12 +17,12 @@ sutskever = neural.network.Sutskever(
 
 # Setup layers
 sutskever.set_encoder_input(neural.layer.Input(data.n_classes, indexed=True))
-sutskever.push_encoder_layer(neural.layer.LSTM(40))
+sutskever.push_encoder_layer(neural.layer.LSTM(200))
 sutskever.push_encoder_layer(neural.layer.LSTM(latent_size))
 
 sutskever.set_decoder_input(neural.layer.Input(data.n_classes))
 sutskever.push_decoder_layer(neural.layer.LSTM(latent_size))
-sutskever.push_decoder_layer(neural.layer.LSTM(40))
+sutskever.push_decoder_layer(neural.layer.LSTM(200))
 sutskever.push_decoder_layer(neural.layer.Softmax(data.n_classes))
 
 # Setup loss function
