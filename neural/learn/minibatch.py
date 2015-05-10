@@ -27,7 +27,8 @@ def single_minibatch(model, train_dataset, shuffle,
         model.train(*minibatch, **kwargs)
 
 def minibatch(model, train_dataset, on_epoch=None, max_time=None, epochs=100, **kwargs):
-    epoch_i = 0
+    if (on_epoch is not None): on_epoch(model, 0)
+    epoch_i = 1
     last = start = datetime.datetime.now()
 
     while (True):
@@ -37,7 +38,7 @@ def minibatch(model, train_dataset, on_epoch=None, max_time=None, epochs=100, **
         epoch_i += 1
 
         if (max_time is None):
-            if (epoch_i >= epochs): break
+            if (epoch_i > epochs): break
         else:
             now = datetime.datetime.now()
             if ((now - start + (now - last)) >= max_time): break

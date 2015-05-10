@@ -41,7 +41,11 @@ output_file = path.join(thisdir, '..', 'outputs', run_name)
 # Simple batch learning
 def missclassification(model, data):
     (x, t) = data.astuple()
-    return np.mean(np.argmax(model.predict(x, max_output_size=t.shape[1]), axis=1) != t)
+    if (len(t.shape) > 1):
+        prediction = model.predict(x, max_output_size=t.shape[1])
+    else:
+        prediction = model.predict(x)
+    return np.mean(np.argmax(prediction, axis=1) != t)
 
 def batch_learn(model, data, **kwargs):
     return _learn(model, data, neural.learn.batch, **kwargs)
