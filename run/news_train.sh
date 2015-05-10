@@ -12,4 +12,4 @@ cd $PBS_O_WORKDIR
 export PYTHONPATH=
 source ~/stdpy3/bin/activate
 
-python3 run/news_train.py
+python3 -u run/news_train.py

@@ -37,3 +37,5 @@ results = run.minibatch_learn(sutskever, data, test_size=1000,
 
 np.savez_compressed(run.output_file + '.epoch.npz', **results)
 np.savez_compressed(run.output_file + '.weights.npz', *sutskever.get_weights())
+
+print('completed')
