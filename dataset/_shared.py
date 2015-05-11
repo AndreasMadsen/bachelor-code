@@ -2,18 +2,19 @@
 import numpy as np
 
 class Dataset():
-    def __init__(self, data, target, classes, max_output_size=None):
+    def __init__(self, data, target, n_classes=None, max_output_size=None):
         self.data = data
         self.target = target
-        self.n_classes = classes
 
+        self.n_classes = n_classes
         self.max_output_size = max_output_size
         self.data_type = 'list' if isinstance(target, list) else 'numpy'
         self.observations = len(target) if self.data_type == 'list' else data.shape[0]
 
     def range(self, start, end):
         return Dataset(
-            self.data[start:end], self.target[start:end], self.n_classes,
+            self.data[start:end], self.target[start:end],
+            n_classes=self.n_classes,
             max_output_size=self.max_output_size
         )
 
@@ -22,12 +23,13 @@ class Dataset():
             return Dataset(
                 [self.data[i] for i in selector],
                 [self.target[i] for i in selector],
-                self.n_classes,
+                n_classes=self.n_classes,
                 max_output_size=self.max_output_size
             )
         else:
             return Dataset(
-                self.data[selector], self.target[selector], self.n_classes,
+                self.data[selector], self.target[selector],
+                n_classes=self.n_classes,
                 max_output_size=self.max_output_size
             )
 

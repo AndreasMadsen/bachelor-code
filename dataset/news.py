@@ -16,6 +16,9 @@ def normalize_string(text):
     text = unicodedata.normalize('NFKD', text)
     return re.sub('([^\040-\176]|[#%&{}|~:;[\]^*+\-`<>])', '', text)
 
+def space_seperate(text):
+    return re.sub('[,.()\'"!_=?@]', ' ', text).split()
+
 def preparse():
     all_text = ""
     text_length = 0
@@ -50,7 +53,22 @@ def str_to_code(str):
     # signed int8
     return np.asarray([char_2_code[c] for c in str + '\x00'], dtype='int8')
 
-def build(items=None):
+def words(items=None):
+    data = []
+    target = []
+
+    with gzip.open(json_file, 'rt') as f:
+        for i, line in enumerate(f):
+            article = json.loads(line)
+            data.append(space_seperate(
+                normalize_string(article['title'] + ' ' + article['text'])
+            ))
+            target.append([])
+            if (items is not None and i + 1 >= items): break
+
+    return Dataset(data, target)
+
+def letters(items=None):
     data = []
     target = []
 

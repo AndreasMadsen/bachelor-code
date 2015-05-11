@@ -7,7 +7,7 @@ import numpy as np
 import dataset
 import neural
 
-data = dataset.news.build()
+data = dataset.news.letters()
 latent_size = 100
 print('dataset build')
 
