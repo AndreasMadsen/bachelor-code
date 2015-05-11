@@ -53,6 +53,19 @@ def str_to_code(str):
     # signed int8
     return np.asarray([char_2_code[c] for c in str + '\x00'], dtype='int8')
 
+def dates(items=None):
+    data = []
+    target = []
+
+    with gzip.open(json_file, 'rt') as f:
+        for i, line in enumerate(f):
+            article = json.loads(line)
+            data.append(np.datetime64(article['date'], 'ms'))
+            target.append(0)
+            if (items is not None and i + 1 >= items): break
+
+    return Dataset(np.asarray(data), np.asarray(target))
+
 def words(items=None):
     data = []
     target = []
