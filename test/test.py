@@ -54,8 +54,8 @@ def classifier(model, generator, y_shape, performance,
     train_dataset = generator(train_size)
     test_dataset = generator(test_size)
 
-    train_error = np.zeros(epochs)
-    test_error = np.zeros(epochs)
+    train_error = np.zeros(epochs + 1)
+    test_error = np.zeros(epochs + 1)
 
     # Train and show progress
     if (not plot): print()
@@ -72,7 +72,7 @@ def classifier(model, generator, y_shape, performance,
             train_error[epoch_i] = model.test(*train_dataset.astuple())
             test_error[epoch_i] = model.test(*test_dataset.astuple())
 
-        pbar.update(epoch_i + 1)
+        pbar.update(epoch_i)
 
     trainer(model, train_dataset, on_epoch=on_epoch, epochs=epochs, **kwargs)
     pbar.finish()
@@ -86,8 +86,8 @@ def classifier(model, generator, y_shape, performance,
         print('miss classifications:', misses)
 
         plt.figure()
-        plt.plot(np.arange(0, epochs), train_error, label='train', alpha=0.5)
-        plt.plot(np.arange(0, epochs), test_error, label='test', alpha=0.5)
+        plt.plot(np.arange(0, epochs + 1), train_error, label='train', alpha=0.5)
+        plt.plot(np.arange(0, epochs + 1), test_error, label='test', alpha=0.5)
         plt.legend()
         plt.ylabel('loss')
 
