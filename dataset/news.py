@@ -46,12 +46,12 @@ unique_chars = '\x00 !"$\'(),./0123456789=?@ABCDEFGHIJKLMNOPQRSTUVWXYZ' \
 text_length = 999
 title_length = 197
 
-char_2_code = {c: i for i, c in enumerate(unique_chars)}
+char2code = {c: i for i, c in enumerate(unique_chars)}
 
 def str_to_code(str):
     # ASCII is 7bit, so there is no reason to use anything higher than
     # signed int8
-    return np.asarray([char_2_code[c] for c in str + '\x00'], dtype='int8')
+    return np.asarray([char2code[c] for c in str + '\x00'], dtype='int8')
 
 def dates(items=None):
     data = []
