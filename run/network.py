@@ -15,10 +15,10 @@ sutskever = neural.network.Sutskever(
 # Setup layers
 sutskever.set_encoder_input(neural.layer.Input(10))
 sutskever.push_encoder_layer(neural.layer.LSTM(40))
-sutskever.push_encoder_layer(neural.layer.LSTM(9))
+sutskever.push_encoder_layer(neural.layer.LSTM(20))
 
 sutskever.set_decoder_input(neural.layer.Input(10))
-sutskever.push_decoder_layer(neural.layer.LSTM(9))
+sutskever.push_decoder_layer(neural.layer.LSTM(20))
 sutskever.push_decoder_layer(neural.layer.LSTM(40))
 sutskever.push_decoder_layer(neural.layer.Softmax(10))
 
