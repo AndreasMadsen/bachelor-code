@@ -1,3 +1,4 @@
 
 from neural.optimizer.momentum import Momentum
-__all__ = ['Momentum']
+from neural.optimizer.rmsprop import RMSprop
+__all__ = ['Momentum', 'RMSprop']
