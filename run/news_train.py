@@ -27,6 +27,7 @@ sutskever.push_decoder_layer(neural.layer.Softmax(data.n_classes))
 
 # Setup loss function
 sutskever.set_loss(neural.loss.NaiveEntropy())
+sutskever.set_optimizer(neural.optimizer.Momentum())
 
 # Compile train, test and predict functions
 sutskever.compile()

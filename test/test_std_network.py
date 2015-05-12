@@ -14,8 +14,9 @@ def test_logistic_classifier():
     logistic.set_input(neural.layer.Input(2))
     logistic.push_layer(neural.layer.Softmax(4))
 
-    # Setup loss function
+    # Setup loss and optimizer
     logistic.set_loss(neural.loss.NaiveEntropy())
+    logistic.set_optimizer(neural.optimizer.Momentum())
 
     # Compile train, test and predict functions
     logistic.compile()
@@ -36,8 +37,9 @@ def test_rnn_classifier():
     rnn.push_layer(neural.layer.RNN(4))
     rnn.push_layer(neural.layer.Softmax(4))
 
-    # Setup loss function
+    # Setup loss and optimizer
     rnn.set_loss(neural.loss.NaiveEntropy())
+    rnn.set_optimizer(neural.optimizer.Momentum())
 
     # Compile train, test and predict functions
     rnn.compile()
@@ -58,8 +60,9 @@ def test_lstm_classifier():
     lstm.push_layer(neural.layer.LSTM(4))
     lstm.push_layer(neural.layer.Softmax(4))
 
-    # Setup loss function
+    # Setup loss and optimizer
     lstm.set_loss(neural.loss.NaiveEntropy())
+    lstm.set_optimizer(neural.optimizer.Momentum())
 
     # Compile train, test and predict functions
     lstm.compile()

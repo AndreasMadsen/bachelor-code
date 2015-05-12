@@ -20,6 +20,7 @@ decoder.push_layer(neural.layer.Softmax(data.n_classes))
 
 # Setup loss function
 decoder.set_loss(neural.loss.NaiveEntropy())
+decoder.set_optimizer(neural.optimizer.Momentum())
 
 # Compile train, test and predict functions
 decoder.compile()

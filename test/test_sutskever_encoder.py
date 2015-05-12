@@ -133,6 +133,7 @@ def test_sutskever_encoder_float_train():
 
     # Setup loss function
     encoder.set_loss(neural.loss.NaiveEntropy(time=False))
+    encoder.set_optimizer(neural.optimizer.Momentum())
 
     # Compile train, test and predict functions
     encoder.compile()
@@ -158,6 +159,7 @@ def test_sutskever_encoder_indexed_train():
 
     # Setup loss function
     encoder.set_loss(neural.loss.NaiveEntropy(time=False))
+    encoder.set_optimizer(neural.optimizer.Momentum())
 
     # Compile train, test and predict functions
     encoder.compile()

@@ -15,8 +15,9 @@ encoder.set_input(neural.layer.Input(data.data.shape[1]))
 encoder.push_layer(neural.layer.LSTM(80))
 encoder.push_layer(neural.layer.Softmax(data.n_classes))
 
-# Setup loss function
+# Setup loss and optimizer
 encoder.set_loss(neural.loss.NaiveEntropy(time=False))
+encoder.set_optimizer(neural.optimizer.Momentum())
 
 # Compile train, test and predict functions
 encoder.compile()

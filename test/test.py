@@ -68,7 +68,7 @@ def classifier(model, generator, y_shape, performance,
     ).start()
 
     def on_epoch(model, epoch_i):
-        if (plot or epoch_i == 0 or epoch_i == (epochs - 1)):
+        if (plot or epoch_i == 0 or epoch_i == epochs):
             train_error[epoch_i] = model.test(*train_dataset.astuple())
             test_error[epoch_i] = model.test(*test_dataset.astuple())
 
