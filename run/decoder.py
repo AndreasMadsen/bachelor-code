@@ -9,7 +9,7 @@ import neural
 data = dataset.decoder.count(11 * 128)
 
 decoder = neural.network.SutskeverDecoder(
-    maxlength=data.target.shape[1], verbose=True
+    max_output_size=data.target.shape[1], verbose=True
 )
 
 # Setup layers
