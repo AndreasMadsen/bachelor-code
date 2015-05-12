@@ -24,13 +24,12 @@ sutskever.push_decoder_layer(neural.layer.Softmax(10))
 
 # Setup loss function
 sutskever.set_loss(neural.loss.NaiveEntropy())
-sutskever.set_optimizer(neural.optimizer.RMSprop())
+sutskever.set_optimizer(neural.optimizer.RMSgrave())
 
 # Compile train, test and predict functions
 sutskever.compile()
 
-results = run.minibatch_learn(sutskever, data, test_size=128, epochs=1000,
-                              learning_rate=0.07)
+results = run.minibatch_learn(sutskever, data, test_size=128, epochs=1000)
 np.savez_compressed(run.output_file + '.npz', **results)
 
 # show example
