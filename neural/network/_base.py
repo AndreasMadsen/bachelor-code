@@ -50,7 +50,7 @@ class BaseAbstraction:
         for layer in self._layers:
             end = curr + len(layer.weights)
             layer.set_weights(new_weights[curr:end])
-            curr += end
+            curr = end
 
     def get_weights(self):
         """
