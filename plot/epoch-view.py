@@ -1,3 +1,6 @@
+
+import plot
+
 import os.path as path
 import sys
 import math
@@ -21,8 +24,8 @@ plt.figure(figsize=(8, 8))
 plt.suptitle(name)
 
 plt.subplot(2, 1, 1)
-plt.plot(np.arange(0, epochs + 1), output['train_miss'], color='IndianRed', label='train')
-plt.plot(np.arange(0, epochs + 1), output['test_miss'], color='SteelBlue', label='test')
+plt.plot(np.arange(0, epochs), output['train_miss'], color='IndianRed', label='train')
+plt.plot(np.arange(0, epochs), output['test_miss'], color='SteelBlue', label='test')
 plt.axhline((n_classes - 1) / n_classes, color='gray')
 plt.legend()
 plt.ylabel('misclassification error [rate]')
@@ -30,8 +33,8 @@ plt.xlabel('epoch')
 plt.ylim(0, 1.1)
 
 plt.subplot(2, 1, 2)
-plt.plot(np.arange(0, epochs + 1), output['train_loss'], color='IndianRed', label='train')
-plt.plot(np.arange(0, epochs + 1), output['test_loss'], color='SteelBlue', label='test')
+plt.plot(np.arange(0, epochs), output['train_loss'], color='IndianRed', label='train')
+plt.plot(np.arange(0, epochs), output['test_loss'], color='SteelBlue', label='test')
 plt.axhline(-math.log(1 / n_classes), color='gray')
 plt.legend()
 plt.ylabel('loss [entropy]')
