@@ -57,9 +57,9 @@ class Connectivity:
 
         # Convert visits to days since unix epoch
         visits = visits.astype('datetime64[D]').astype('int16')
-        connectivity = self._fn(visits)
+        connectivity = self._fn(visits)[0]
         if (self._verbose): print("\tSparseifying results")
-        connectivity = scipy.sparse.triu(sparse.coo_matrix(connectivity), 1)
+        connectivity = scipy.sparse.triu(scipy.sparse.coo_matrix(connectivity), 1)
 
         if (self._verbose): print("\tDone, took %d min" % ((time.time() - tick) / 60))
         return connectivity
