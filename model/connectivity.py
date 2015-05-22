@@ -56,7 +56,7 @@ class Connectivity:
         tick = time.time()
 
         # Convert visits to days since unix epoch
-        visits = visits.astype('datetime64[D]').astype('int16')
+        visits = dataset.data.astype('datetime64[D]').astype('int16')
         connectivity = self._fn(visits)[0]
         if (self._verbose): print("\tSparseifying results")
         connectivity = scipy.sparse.triu(scipy.sparse.coo_matrix(connectivity), 1)
