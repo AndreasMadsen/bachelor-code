@@ -33,7 +33,7 @@ def save(filename, array):
         _save_formats[array.getformat()](h5f, array)
 
         h5f.close()
-    elif (ext == '.np'):
+    elif (ext == '.npy'):
         np.save(filename, array)
     else:
         raise NotImplementedError('filetype %s not supported for saveing' % ext)
@@ -66,8 +66,8 @@ def load(filename):
         h5f = h5.File(filename, mode='r')
         matrix = _load_formats[h5f.attrs['format']](h5f)
         h5f.close()
-    elif (ext == '.np'):
-        matrix = np.load(filename, array)
+    elif (ext == '.npy'):
+        matrix = np.load(filename)
     else:
         raise NotImplementedError('filetype %s not supported for loading' % ext)
 
