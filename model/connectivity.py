@@ -27,7 +27,7 @@ class Connectivity:
         # Build theano function
         visits = T.vector('visits', dtype='int16')
         diff = T.abs_(visits.dimshuffle(('x', 0)) - visits.dimshuffle((0, 'x')))
-        connected = T.triu(diff < T.constant(days, dtype='int16'), 1)
+        connected = diff < T.constant(days, dtype='int16')
 
         self._fn = theano.function(
             inputs=[visits],
@@ -59,7 +59,7 @@ class Connectivity:
         visits = visits.astype('datetime64[D]').astype('int16')
         connectivity = self._fn(visits)
         if (self._verbose): print("\tSparseifying results")
-        connectivity = scipy.sparse.coo_matrix(connectivity)
+        connectivity = scipy.sparse.triu(sparse.coo_matrix(connectivity), 1)
 
         if (self._verbose): print("\tDone, took %d min" % ((time.time() - tick) / 60))
         return connectivity
