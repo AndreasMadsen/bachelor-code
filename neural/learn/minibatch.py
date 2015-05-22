@@ -9,8 +9,8 @@ def subselect(source, select):
     else:
         return source[select]
 
-def single_minibatch(model, train_dataset, shuffle,
-                     minibatch_size=128,
+def single_minibatch(model, train_dataset, shuffle, epoch_i,
+                     minibatch_size=128, on_mini_batch=None,
                      **kwargs):
 
     (data, target) = (train_dataset.data, train_dataset.target)
@@ -24,7 +24,13 @@ def single_minibatch(model, train_dataset, shuffle,
         minibatch_select = shuffle[minibatch_start:minibatch_end]
 
         minibatch = train_dataset.select(minibatch_select).astuple()
-        model.train(*minibatch, **kwargs)
+        loss = model.train(*minibatch, **kwargs)
+        if (on_mini_batch):
+            on_mini_batch(
+                model, i,
+                (epoch_i - 1) + (minibatch_start + minibatch_end) / (2 * observations),
+                loss
+            )
 
 def minibatch(model, train_dataset, on_epoch=None, max_time=None, epochs=100, **kwargs):
     if (on_epoch is not None): on_epoch(model, 0)
@@ -33,7 +39,7 @@ def minibatch(model, train_dataset, on_epoch=None, max_time=None, epochs=100, **
 
     while (True):
         shuffle = np.random.permutation(train_dataset.observations)
-        single_minibatch(model, train_dataset, shuffle, **kwargs)
+        single_minibatch(model, train_dataset, shuffle, epoch_i, **kwargs)
         if (on_epoch is not None): on_epoch(model, epoch_i)
         epoch_i += 1
 

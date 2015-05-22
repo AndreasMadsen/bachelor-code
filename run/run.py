@@ -63,31 +63,51 @@ def _learn(model, data, learning_method, test_size=100, **kwargs):
     train_size = train_dataset.observations
 
     train_loss = []
+    train_loss_epoch = []
     test_loss = []
+    test_loss_epoch = []
 
     train_miss = []
+    train_miss_epoch = []
     test_miss = []
+    test_miss_epoch = []
+
+    def on_mini_batch(model, index, epoch, loss):
+        if (index % 10 == 5):
+            train_loss.append(loss)
+            train_loss_epoch.append(epoch)
 
     def on_epoch(model, epoch_i):
         train_loss.append(model.test(*train_sample.astuple()))
+        train_loss_epoch.append(epoch_i)
+
         test_loss.append(model.test(*test_dataset.astuple()))
+        test_loss_epoch.append(epoch_i)
 
         train_miss.append(missclassification(model, train_sample))
+        train_miss_epoch.append(epoch_i)
+
         test_miss.append(missclassification(model, test_dataset))
+        test_miss_epoch.append(epoch_i)
 
         print('  train: size %d, epoch %d, train loss %f, test miss: %f' % (
             train_size, epoch_i, train_loss[-1], test_miss[-1]
         ))
 
     learning_method(model, train_dataset,
-                    on_epoch=on_epoch, **kwargs)
+                    on_epoch=on_epoch, on_mini_batch=on_mini_batch,
+                    **kwargs)
 
     return {
-        'train_loss': np.asarray(train_loss),
-        'test_loss': np.asarray(test_loss),
+        'train_loss': np.asarray(train_loss, dtype='float32'),
+        'train_loss_epoch': np.asarray(train_loss_epoch, dtype='float32'),
+        'test_loss': np.asarray(test_loss, dtype='float32'),
+        'test_loss_epoch': np.asarray(test_loss_epoch, dtype='float32'),
 
-        'train_miss': np.asarray(train_miss),
-        'test_miss': np.asarray(test_miss),
+        'train_miss': np.asarray(train_miss, dtype='float32'),
+        'train_miss_epoch': np.asarray(train_miss_epoch, dtype='float32'),
+        'test_miss': np.asarray(test_miss, dtype='float32'),
+        'test_miss_epoch': np.asarray(test_miss_epoch, dtype='float32'),
 
         'n_classes': np.asarray([data.n_classes])
     }
