@@ -36,7 +36,7 @@ loss_fig = plt.subplot(2, 1, 2)
 
 if ('train_loss_minibatch' in output):
     plt.plot(output['train_loss_minibatch_epoch'], output['train_loss_minibatch'],
-             color='IndianRed', ls='--', label='train minibatch')
+             color='IndianRed', alpha=0.5, label='train minibatch')
 
 plt.plot(range(0, epochs), output['train_loss'], color='IndianRed', label='train')
 plt.plot(range(0, epochs), output['test_loss'], color='SteelBlue', label='test')
