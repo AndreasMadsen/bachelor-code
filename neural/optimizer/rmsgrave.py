@@ -37,7 +37,7 @@ class RMSgrave(OptimizerAbstract):
         self._clip = T.scalar('clip')
         self._clip.tag.test_value = 10
         self.params.append(
-            theano.Param(self._clip, default=10, name='decay')
+            theano.Param(self._clip, default=10, name='clip')
         )
 
     def each_update(self, Wi, gWi):
@@ -63,13 +63,12 @@ class RMSgrave(OptimizerAbstract):
 
     def update(self, W, gW):
 
+        # Downscale such that max(gW) in [-10, 10]
         max_value = 0
         for gWi in gW:
             max_value = T.maximum(T.max(T.abs_(gWi)), max_value)
-        too_big = T.ge(max_value, self._clip)
+        scale = T.minimum(1, self._clip / max_value)
 
-        gW_clipped = [
-            T.switch(too_big, gWi / max_value, gWi) for gWi in gW
-        ]
+        gW_clipped = [gWi * scale for gWi in gW]
 
         return super().update(W, gW_clipped)
