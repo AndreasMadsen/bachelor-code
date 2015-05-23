@@ -36,7 +36,8 @@ if (theano.config.optimizer == 'fast_run'):
 run_name = (os.environ.get('OUTNAME')
             if os.environ.get('OUTNAME') is not None
             else str(os.getpid()))
-output_file = path.join(thisdir, '..', 'outputs', run_name)
+output_dir = path.join(thisdir, '..', 'outputs')
+output_file = path.join(output_dir, run_name)
 
 # Simple batch learning
 def missclassification(model, data):
