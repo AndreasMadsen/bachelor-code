@@ -24,4 +24,4 @@ class Word2Vec(LatentAbstraction):
             print('\tpretrained model loaded, took %d min' % ((time.time() - tick) / 60))
 
     def representation(self, sentense):
-        return np.sum([self._model[word] for word in sentense if (word in self._model)], axis=0)
+        return np.mean([self._model[word] for word in sentense if (word in self._model)], axis=0)
