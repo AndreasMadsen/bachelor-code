@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<meta charset='utf8'>
+
+<style>
+html, body {
+    border: none;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
+body {
+    background: rgb(250, 250, 250);
+}
+
+article {
+    box-sizing: border-box;
+    width: 50%;
+    padding: 10px;
+    float: left;
+}
+article:first-of-type {
+    border-right: 1px solid gray;
+}
+article:last-of-type {
+    border-left: 1px solid gray;
+}
+
+article img {
+    height: 200px;
+}
+
+article a {
+    text-decoration: none;
+    color: black;
+}
+
+article h1 {
+    font-family: "Latin Modern Sans";
+}
+
+article .details {
+    font-size: 14px;
+    padding: 5px;
+    font-family: "Monaco";
+}
+
+article .summary {
+    font-weight: bold;
+    font-size: 16px;
+    line-height: 19px;
+    font-family: "Latin Modern Roman";
+}
+
+article .text {
+    font-size: 14px;
+    line-height: 18px;
+    font-family: "Latin Modern Roman";
+}
+</style>
+
+<article id="left"></article>
+<article id="right"></article>
+
+<script>
+(function () {
+    function ArticleFrame() {
+        this._stuff = document.createDocumentFragment();
+
+        this._link = document.createElement('a');
+        this._stuff.appendChild(this._link);
+
+        this._title = document.createElement('h1');
+        this._link.appendChild(this._title);
+
+        var details = document.createElement('div');
+            details.classList.add('details');
+        this._stuff.appendChild(details);
+        this._index = document.createElement('span');
+        details.appendChild(this._index);
+
+        this._image = document.createElement('img');
+        this._stuff.appendChild(this._image);
+
+        this._summary = document.createElement('p');
+        this._summary.classList.add('summary');
+        this._stuff.appendChild(this._summary);
+
+        this._text = document.createElement('p');
+        this._text.classList.add('text');
+        this._stuff.appendChild(this._text);
+    }
+
+    ArticleFrame.prototype.append = function (el) {
+        el.appendChild(this._stuff);
+    };
+
+    ArticleFrame.prototype.update = function (data) {
+        this._title.innerHTML = data.title;
+        this._index.innerHTML = '(' + data.index + ')';
+        this._link.href = data.href;
+        this._image.src = data.image;
+        this._summary.innerHTML = (data.summary || '').replace('\n', '<br>');
+        this._text.innerHTML = '<p>' + data.text.replace('\n\n', '</p><p>').replace('\n', '<br>') + '</p>';
+    };
+
+    var left = new ArticleFrame();
+        left.append(document.querySelector('#left'));
+
+    var right = new ArticleFrame();
+        right.append(document.querySelector('#right'));
+
+    window.addEventListener('storage', function (event) {
+        if (event.key === 'graph-left' && event.newValue) {
+            left.update(JSON.parse(event.newValue));
+        } else if (event.key === 'graph-right' && event.newValue) {
+            right.update(JSON.parse(event.newValue));
+        }
+    });
+
+    function initFrame(frame, side) {
+        var obj = localStorage.getItem('graph-' + side);
+        if (obj) frame.update(JSON.parse(obj));
+    }
+    initFrame(left, 'left');
+    initFrame(right, 'right');
+})();
+</script>
