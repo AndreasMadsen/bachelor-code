@@ -6,7 +6,7 @@ import numpy as np
 import scipy
 
 class Cluster:
-    def __init__(self, threshold=10, verbose=False):
+    def __init__(self, threshold=0.11, verbose=False):
         """Constructs an model object capable of finding similar documents
         in a network graph perspectiv.
 
