@@ -13,8 +13,8 @@ class RMSgrave(OptimizerAbstract):
     source: http://arxiv.org/abs/1308.0850 , page 23
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, *args, clipping_stratagy='max', **kwargs):
+        super().__init__(*args, clipping_stratagy=clipping_stratagy, **kwargs)
 
         self._learning_rate = T.scalar('eta')
         self._learning_rate.tag.test_value = 1e-4
@@ -32,12 +32,6 @@ class RMSgrave(OptimizerAbstract):
         self._decay.tag.test_value = 0.95
         self.params.append(
             theano.Param(self._decay, default=0.95, name='decay')
-        )
-
-        self._clip = T.scalar('clip')
-        self._clip.tag.test_value = 10
-        self.params.append(
-            theano.Param(self._clip, default=10, name='clip')
         )
 
     def each_update(self, Wi, gWi):
@@ -60,15 +54,3 @@ class RMSgrave(OptimizerAbstract):
         v_t = self._momentum * v_tm1 - self._learning_rate * Δ_t  # (40)
 
         return [(f_tm1, f_t), (g_tm1, g_t), (v_tm1, v_t), (Wi, Wi + v_t)]
-
-    def update(self, W, gW):
-
-        # Downscale such that max(gW) in [-10, 10]
-        max_value = 0
-        for gWi in gW:
-            max_value = T.maximum(T.max(T.abs_(gWi)), max_value)
-        scale = T.minimum(1, self._clip / max_value)
-
-        gW_clipped = [gWi * scale for gWi in gW]
-
-        return super().update(W, gW_clipped)
