@@ -38,8 +38,10 @@ class Cluster:
         #        connects[row, col] = True
         # connects += connects.T # make it symmetric
         mask = distance.data < self._threshold
-        row_index = np.hstack([distance.row[mask], distance.col[mask]])
-        col_index = np.hstack([distance.col[mask], distance.row[mask]])
+        connects_row = distance.row[mask]
+        connects_col = distance.col[mask]
+        row_index = np.hstack([connects_row, connects_col])
+        col_index = np.hstack([connects_col, connects_row])
 
         def connected_nodes(node_id):
             return set(col_index[row_index == node_id])
@@ -95,7 +97,9 @@ class Cluster:
         if (self._verbose): print("\tGroup creation done")
 
         return {
+            'connects_row': connects_row,
+            'connects_col': connects_col,
             'group_size': group_size_array,
-            'group': group,
+            'group': group_array,
             'node_to_group': node_to_group
         }
