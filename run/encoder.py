@@ -17,11 +17,10 @@ encoder.push_layer(neural.layer.Softmax(data.n_classes))
 
 # Setup loss and optimizer
 encoder.set_loss(neural.loss.NaiveEntropy(time=False))
-encoder.set_optimizer(neural.optimizer.Momentum())
+encoder.set_optimizer(neural.optimizer.RMSgrave())
 
 # Compile train, test and predict functions
 encoder.compile()
 
-results = run.minibatch_learn(encoder, data, test_size=128, epochs=300,
-                          learning_rate=0.07, momentum=0.2)
+results = run.minibatch_learn(encoder, data, test_size=128, epochs=300)
 np.savez_compressed(run.output_file + '.npz', **results)

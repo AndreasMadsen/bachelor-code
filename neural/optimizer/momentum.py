@@ -10,15 +10,15 @@ class Momentum(OptimizerAbstract):
         super().__init__(*args, **kwargs)
 
         self._learning_rate = T.scalar('eta')
-        self._learning_rate.tag.test_value = 0.1
+        self._learning_rate.tag.test_value = 0.07
         self.params.append(
-            theano.Param(self._learning_rate, default=0.1, name='learning_rate')
+            theano.Param(self._learning_rate, default=0.07, name='learning_rate')
         )
 
         self._momentum = T.scalar('m')
-        self._momentum.tag.test_value = 0.9
+        self._momentum.tag.test_value = 0.2
         self.params.append(
-            theano.Param(self._momentum, default=0.9, name='momentum')
+            theano.Param(self._momentum, default=0.2, name='momentum')
         )
 
     def each_update(self, Wi, gWi):
