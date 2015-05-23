@@ -93,3 +93,15 @@ def letters(items=None):
             if (items is not None and i + 1 >= items): break
 
     return Dataset(data, target, len(unique_chars), max_output_size=title_length)
+
+def fetch(items=None):
+    output = []
+
+    with gzip.open(json_file, 'rt') as f:
+        for i, line in enumerate(f):
+            article = json.loads(line)
+            article['id'] = i
+            output.append(article)
+            if (items is not None and i + 1 >= items): break
+
+    return output
