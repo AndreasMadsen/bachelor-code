@@ -6,7 +6,17 @@ import ujson as json
 import numpy as np
 import scipy.sparse
 
+import time
+
 thisdir = path.dirname(path.realpath(__file__))
+
+class npzToObj:
+    def __init__(self, npz):
+        """
+        npz are lazyloaded, this preloads it loads
+        """
+        for name in npz.files:
+            setattr(self, name, npz[name])
 
 
 class GraphServer:
@@ -14,7 +24,7 @@ class GraphServer:
         self._verbose = verbose
         if (self._verbose): print("Initializing graph server")
 
-        self._clusters = clusters
+        self._clusters = npzToObj(clusters)
         self._distance = scipy.sparse.csr_matrix(distance)
         self._connectivity = scipy.sparse.csr_matrix(connectivity)
         self._raw_nodes = nodes
@@ -49,7 +59,7 @@ class GraphServer:
         ], dtype='bool')
 
         # Fetch groups
-        groups = set(int(group) for group in self._clusters['node_to_group'][match])
+        groups = set(int(group) for group in self._clusters.node_to_group[match])
         if (self._verbose): print("\tSearch complete, found %d groups" % len(groups))
 
         return groups
@@ -58,18 +68,18 @@ class GraphServer:
         if (self._verbose): print("\tFetching group %d" % group_id)
 
         # Create node info object
-        nodes = self._clusters['group'][group_id, 0:self._clusters['group_size'][group_id]]
+        nodes = self._clusters.group[group_id, 0:self._clusters.group_size[group_id]]
         node_info = [self._nodes[id] for id in nodes]
 
         # Create link info object
         if (self._verbose): print("\tBuilding link object")
-        mask = np.any(self._clusters['connects_row'][:, np.newaxis] == nodes, axis=1)
+        mask = np.any(self._clusters.connects_row[:, np.newaxis] == nodes, axis=1)
         if (np.sum(mask) == 0):
             link_info = []
         else:
             info = (
-                self._clusters['connects_row'][mask],
-                self._clusters['connects_col'][mask]
+                self._clusters.connects_row[mask],
+                self._clusters.connects_col[mask]
             )
 
             link_info = [
@@ -85,7 +95,7 @@ class GraphServer:
         if (self._verbose): print("Fetching groups")
 
         # Validate groups
-        max_group_size = int(self._clusters['group'].shape[0])
+        max_group_size = int(self._clusters.group.shape[0])
         for group in groups:
             if (group >= max_group_size):
                 if (self._verbose): print("\tGroup with id %d do not exists" % group)
