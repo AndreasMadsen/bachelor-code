@@ -8,14 +8,14 @@ import theano.tensor as T
 
 
 class Distance:
-    def __init__(self, norm='L2', verbose=False):
+    def __init__(self, norm='l2', verbose=False):
         """Construct an object, with the primary method transform, there can
         create a sparse distance matrix.
 
         Parameters
         ----------
         norm: String
-            Describes which norm to use (default is L2)
+            Describes which norm to use (default is l2)
 
         verbose : boolean
             If true progressiv information will be printed.
@@ -29,8 +29,15 @@ class Distance:
         ri = T.ivector('ri')
         ci = T.ivector('ci')
 
-        if (norm == 'L2'):
+        if (norm == 'l2'):
             distance = T.sqrt(T.sum((vecs[ri] - vecs[ci])**2, axis=1))
+        elif (norm == 'cos'):
+            r_norm = T.sqrt(T.sum(vecs[ri] ** 2, axis=1))
+            c_norm = T.sqrt(T.sum(vecs[ci] ** 2, axis=1))
+            dot = T.sum(vecs[ri] * vecs[ci], axis=1)
+            distance = dot / (r_norm * c_norm)
+        else:
+            raise NotImplementedError('distance %s is not implemented' % norm)
 
         self._fn = theano.function(
             inputs=[ri, ci, vecs],

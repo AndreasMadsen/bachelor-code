@@ -24,7 +24,7 @@ sutskever.push_decoder_layer(neural.layer.Softmax(10))
 
 # Setup loss function
 sutskever.set_loss(neural.loss.NaiveEntropy())
-sutskever.set_optimizer(neural.optimizer.RMSgrave())
+sutskever.set_optimizer(neural.optimizer.RMSgrave(clipping_stratagy='L2'))
 
 # Compile train, test and predict functions
 sutskever.compile()

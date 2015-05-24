@@ -11,10 +11,11 @@ import model
 
 from graph_server import GraphServer
 
+name = sys.argv[1]
 build_dir = path.join(thisdir, '..', 'outputs', 'builds')
 
-clusters = model.load(path.join(build_dir, 'word2vec.cluster.npz'))
-distance = model.load(path.join(build_dir, 'word2vec.distance.hd5'))
+clusters = model.load(path.join(build_dir, '%s.cluster.npz' % name))
+distance = model.load(path.join(build_dir, '%s.distance.hd5' % name))
 connectivity = model.load(path.join(build_dir, 'connectivity.hd5'))
 nodes = dataset.news.fetch(100000)
 

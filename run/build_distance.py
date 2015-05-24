@@ -3,11 +3,19 @@ import run
 import dataset
 import model
 
+import sys
 import os.path as path
 
-connectivity = model.load(path.join(run.output_dir, 'builds/connectivity.hd5'))
-vecs = model.load(path.join(run.output_dir, 'builds/word2vec.vecs.npy'))
+if (len(sys.argv) < 3):
+    print('python3 run/build_distance.py name norm')
+    sys.exit(1)
 
-m = model.Distance(verbose=True)
+name = sys.argv[1]
+norm = sys.argv[2]
+
+connectivity = model.load(path.join(run.output_dir, 'builds/connectivity.hd5'))
+vecs = model.load(path.join(run.output_dir, 'builds/%s.vecs.npy' % name))
+
+m = model.Distance(norm=norm, verbose=True)
 distance = m.transform(connectivity, vecs)
-model.save(path.join(run.output_dir, 'builds/word2vec.distance.hd5'), distance)
+model.save(path.join(run.output_dir, 'builds/%s-%s.distance.hd5' % (name, norm)), distance)
