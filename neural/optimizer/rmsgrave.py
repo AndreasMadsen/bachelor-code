@@ -36,16 +36,19 @@ class RMSgrave(OptimizerAbstract):
 
     def each_update(self, Wi, gWi):
         f_tm1 = theano.shared(
-            np.zeros(self.get_weight_shape(Wi), dtype='float32'),
+            self.initialize(Wi),
             name="f" + Wi.name[1:], borrow=True)
+        self._state.append(f_tm1)
 
         g_tm1 = theano.shared(
-            np.zeros(self.get_weight_shape(Wi), dtype='float32'),
+            self.initialize(Wi),
             name="g" + Wi.name[1:], borrow=True)
+        self._state.append(g_tm1)
 
         v_tm1 = theano.shared(
-            np.zeros(self.get_weight_shape(Wi), dtype='float32'),
+            self.initialize(Wi),
             name="v" + Wi.name[1:], borrow=True)
+        self._state.append(v_tm1)
 
         f_t = self._decay * f_tm1 + (1 - self._decay) * gWi  # (39)
         g_t = self._decay * g_tm1 + (1 - self._decay) * (gWi**2)  # (38)

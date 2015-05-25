@@ -23,8 +23,9 @@ class Momentum(OptimizerAbstract):
 
     def each_update(self, Wi, gWi):
         ΔWi_tm1 = theano.shared(
-            np.zeros(self.get_weight_shape(Wi), dtype='float32'),
+            self.initialize(Wi),
             name="Δ" + Wi.name, borrow=True)
+        self._state.append(ΔWi_tm1)
 
         ΔWi = - self._momentum * ΔWi_tm1 - self._learning_rate * gWi
         return [(ΔWi_tm1, ΔWi), (Wi, Wi + ΔWi)]

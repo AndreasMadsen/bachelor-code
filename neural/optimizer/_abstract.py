@@ -1,12 +1,14 @@
 
 import itertools
 
+import numpy as np
 import theano
 import theano.tensor as T
 
 class OptimizerAbstract:
     def __init__(self, *args, clipping_stratagy=None, **kwargs):
         self.params = []
+        self._state = []
 
         self._clipping_stratagy = clipping_stratagy
 
@@ -16,11 +18,17 @@ class OptimizerAbstract:
             theano.Param(self._clip, default=10, name='clip')
         )
 
-    def get_weight_shape(self, Wi):
-        return Wi.get_value(
+    def initialize(self, Wi):
+        shape = Wi.get_value(
             borrow=True,
             return_internal_type=True
         ).shape
+
+        return np.zeros(shape, dtype='float32')
+
+    def reset_state(self):
+        for state in self._state:
+            state.set_value(self.initialize(state), borrow=True)
 
     def each_update(self, Wi, gWi):
         raise NotImplemented

@@ -33,6 +33,12 @@ class OptimizerAbstraction():
         """
         self._optimizer = optimizer
 
+    def reset_state(self):
+        """
+        Will reinitialize all state values used in the optimizer
+        """
+        self._optimizer.reset_state()
+
     def backward_pass(self, L, W):
         """
         Derive equations for the backward pass

@@ -30,8 +30,9 @@ class RMSprop(OptimizerAbstract):
 
     def each_update(self, Wi, gWi):
         r_tm1 = theano.shared(
-            np.zeros(self.get_weight_shape(Wi), dtype='float32'),
+            self.initialize(Wi),
             name="r" + Wi.name[1:], borrow=True)
+        self._state.append(r_tm1)
 
         r = (1 - self._decay) * (gWi**2) + self._decay * r_tm1
         ΔWi = (self._learning_rate / T.sqrt(r + 1e-4)) * gWi
