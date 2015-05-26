@@ -2,6 +2,7 @@
 from model.connectivity import Connectivity
 from model.sparse import load, save
 from model.word2vec import Word2Vec
+from model.doc2vec import Doc2Vec
 from model.distance import Distance
 from model.cluster import Cluster
 

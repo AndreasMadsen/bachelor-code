@@ -16,6 +16,8 @@ if (name == 'word2vec-l2'):
     threshold = 0.11
 elif (name == 'word2vec-cos'):
     threshold = 0.2
+elif (name == 'doc2vec-cos'):
+    threshold = -0.6
 else:
     raise NotImplementedError('no defined threshold for %s' % name)
 
