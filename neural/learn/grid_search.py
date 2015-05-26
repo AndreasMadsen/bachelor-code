@@ -45,7 +45,7 @@ class GridSearch:
 
         def recursion(params, keys):
             if (len(keys) == 0):
-                return trial(params)
+                return trial(dict(params))
 
             key = keys.pop()
             values = self._param_grid[key]
@@ -85,7 +85,7 @@ class GridSearch:
             pbar.finish()
 
         elif (self._verbose):
-            def on_epoch(model, index, epoch, loss):
+            def on_epoch(model, epoch_i):
                 print('\tepoch: %d' % epoch_i)
 
             minibatch(self._model, train, on_epoch=on_epoch, **params)

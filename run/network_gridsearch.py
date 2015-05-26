@@ -31,7 +31,7 @@ sutskever.set_optimizer(neural.optimizer.RMSgrave(clipping_stratagy='L2'))
 sutskever.compile()
 
 search = neural.learn.GridSearch(sutskever, {
-    "epochs": 2,
+    "epochs": 20,
     "momentum": [0, 0.2, 0.9],
     "decay": [0.9, 0.95],
     "clip": [1, 5, 10, 50],
