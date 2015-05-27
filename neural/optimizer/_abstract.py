@@ -14,9 +14,10 @@ class OptimizerAbstract:
 
         self._clip = T.scalar('clip')
         self._clip.tag.test_value = 10
-        self.params.append(
-            theano.Param(self._clip, default=10, name='clip')
-        )
+        if (self._clipping_stratagy is not None):
+            self.params.append(
+                theano.Param(self._clip, default=10, name='clip')
+            )
 
     def initialize(self, Wi):
         shape = Wi.get_value(
