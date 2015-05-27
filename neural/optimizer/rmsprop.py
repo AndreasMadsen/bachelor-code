@@ -35,6 +35,6 @@ class RMSprop(OptimizerAbstract):
         self._state.append(r_tm1)
 
         r = (1 - self._decay) * (gWi**2) + self._decay * r_tm1
-        ΔWi = (self._learning_rate / T.sqrt(r + 1e-4)) * gWi
+        ΔWi = - (self._learning_rate / T.sqrt(r + 1e-4)) * gWi
 
         return [(r_tm1, r), (Wi, Wi + ΔWi)]
