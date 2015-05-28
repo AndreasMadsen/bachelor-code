@@ -26,19 +26,12 @@ class Doc2Vec:
             print("Creating vector representations for %d documents" % dataset.observations)
         tick = time.time()
 
-        if (self._verbose): print("\tLoading brown corpus")
-        brown = list(gensim.models.doc2vec.LabeledBrownCorpus(
-            path.join(thisdir, '../outputs/builds/doc2vec.corpus')
-        ))
-
-        if (self._verbose): print("\tBuilding custom corpus")
-        data = list([
+        if (self._verbose): print("\tBuilding corpus")
+        sentences = list([
             gensim.models.doc2vec.LabeledSentence(words=sent, labels=["SENT_%d" % i])
             for i, sent
             in enumerate(dataset.data)
         ])
-
-        sentences = brown + data
 
         if (self._verbose): print("\tBuilding vocabulary")
         self._model.build_vocab(sentences)
