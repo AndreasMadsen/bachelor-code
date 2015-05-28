@@ -11,13 +11,14 @@ from dataset._shared import Dataset
 
 thisdir = path.dirname(path.realpath(__file__))
 json_file = path.join(thisdir, 'data', 'news.json.gz')
+json_full_file = path.join(thisdir, 'data', 'news.full.json.gz')
 
 def normalize_string(text):
     text = unicodedata.normalize('NFKD', text)
     return re.sub('([^\040-\176]|[#%&{}|~:;[\]^*+\-`<>])', '', text)
 
 def space_seperate(text):
-    return re.sub('[,.()\'"!_=?@]', ' ', text).split()
+    return re.sub('[,.()\'"!_=?@\n]', ' ', text).split()
 
 def preparse():
     all_text = ""
@@ -66,11 +67,11 @@ def dates(items=None):
 
     return Dataset(np.asarray(data), np.asarray(target))
 
-def words(items=None):
+def words(full=False, items=None):
     data = []
     target = []
 
-    with gzip.open(json_file, 'rt') as f:
+    with gzip.open(json_full_file if full else json_file, 'rt') as f:
         for i, line in enumerate(f):
             article = json.loads(line)
             data.append(space_seperate(
