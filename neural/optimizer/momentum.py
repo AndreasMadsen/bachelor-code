@@ -27,5 +27,5 @@ class Momentum(OptimizerAbstract):
             name="Δ" + Wi.name, borrow=True)
         self._state.append(ΔWi_tm1)
 
-        ΔWi = - self._momentum * ΔWi_tm1 - self._learning_rate * gWi
+        ΔWi = self._momentum * ΔWi_tm1 - self._learning_rate * gWi
         return [(ΔWi_tm1, ΔWi), (Wi, Wi + ΔWi)]
