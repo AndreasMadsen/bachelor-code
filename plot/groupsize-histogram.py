@@ -14,3 +14,6 @@ print("%7s | %3s" % ("size", "count"))
 
 for size in sizes:
     print("%7d | %3d" % (size, np.sum(group_size == size)))
+
+print('\ngood groups:')
+print(np.where(np.logical_and(group_size < 14, group_size > 4))[0])
