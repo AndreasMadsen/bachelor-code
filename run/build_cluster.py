@@ -12,10 +12,14 @@ if (len(sys.argv) < 2):
 
 name = sys.argv[1]
 
-if (name == 'word2vec-l2'):
-    threshold = 0.11
-elif (name == 'word2vec-cos'):
-    threshold = 0.2
+if (name == 'word2vec-both-l2'):
+    threshold = 0.14
+elif (name == 'word2vec-both-cos'):
+    threshold = 0.092
+elif (name == 'word2vec-title-l2'):
+    threshold = 0.35
+elif (name == 'word2vec-title-cos'):
+    threshold = 0.024
 elif (name == 'doc2vec-cos'):
     threshold = -0.6
 else:
