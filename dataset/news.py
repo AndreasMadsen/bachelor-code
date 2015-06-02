@@ -67,16 +67,18 @@ def dates(items=None):
 
     return Dataset(np.asarray(data), np.asarray(target))
 
-def words(full=False, items=None):
+def words(items=None, full=False, with_text=True):
     data = []
     target = []
 
     with gzip.open(json_full_file if full else json_file, 'rt') as f:
         for i, line in enumerate(f):
             article = json.loads(line)
-            data.append(space_seperate(
-                normalize_string(article['title'] + ' ' + article['text'])
-            ))
+
+            text = article['title']
+            if (with_text): text += ' ' + article['text']
+
+            data.append(space_seperate(normalize_string(text)))
             target.append([])
             if (items is not None and i + 1 >= items): break
 
