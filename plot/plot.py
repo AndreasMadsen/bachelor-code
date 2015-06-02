@@ -9,6 +9,7 @@ sys.path.append(path.join(thisdir, '..'))
 
 import matplotlib as mpl
 if (os.environ.get('DISPLAY') is None): mpl.use('Agg')
+if (os.environ.get('BACKEND') is not None): mpl.use(os.environ.get('BACKEND'))
 
 import theano
 
