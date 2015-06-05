@@ -54,7 +54,7 @@ def batch_learn(model, data, **kwargs):
 def minibatch_learn(model, data, **kwargs):
     return _learn(model, data, neural.learn.minibatch, **kwargs)
 
-def _learn(model, data, learning_method, test_size=100, **kwargs):
+def _learn(model, data, learning_method, test_size=100, regression=False, **kwargs):
     # Use 1/3 as test data
     test_dataset = data.range(0, test_size)
     train_sample = data.range(test_size, 2 * test_size)
@@ -83,11 +83,12 @@ def _learn(model, data, learning_method, test_size=100, **kwargs):
         train_loss.append(model.test(*train_sample.astuple()))
         test_loss.append(model.test(*test_dataset.astuple()))
 
-        train_miss.append(missclassification(model, train_sample))
-        test_miss.append(missclassification(model, test_dataset))
+        if (not regression):
+            train_miss.append(missclassification(model, train_sample))
+            test_miss.append(missclassification(model, test_dataset))
 
         print('  train: size %d, epoch %d, train loss %f, test miss: %f' % (
-            train_size, epoch_i, train_loss[-1], test_miss[-1]
+            train_size, epoch_i, train_loss[-1], np.nan if regression else train_miss[-1]
         ))
 
     learning_method(model, train_dataset,
@@ -101,8 +102,9 @@ def _learn(model, data, learning_method, test_size=100, **kwargs):
         'train_loss_minibatch': np.asarray(train_loss_minibatch, dtype='float32'),
         'train_loss_minibatch_epoch': np.asarray(train_loss_minibatch_epoch, dtype='float32'),
 
-        'train_miss': np.asarray(train_miss, dtype='float32'),
-        'test_miss': np.asarray(test_miss, dtype='float32'),
+        'train_miss': None if regression else np.asarray(train_miss, dtype='float32'),
+        'test_miss': None if regression else np.asarray(test_miss, dtype='float32'),
 
+        'type': 'regression' if regression else 'classification',
         'n_classes': np.asarray([data.n_classes])
     }

@@ -9,6 +9,7 @@ class LSTM(LayerAbstract):
     def __init__(self, size, bias=True, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._use_bias = bias
+        self._add_log = False
         self.output_size = size
 
         self._splits = [

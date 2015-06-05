@@ -176,9 +176,9 @@ class Encoder(BaseAbstraction):
             return (None, b_enc[-1, :, :])
 
 class SutskeverEncoder(Encoder, OptimizerAbstraction):
-    def __init__(self, indexed_input=False, **kwargs):
+    def __init__(self, indexed_input=False, regression=False, **kwargs):
         self._input = T.imatrix('x') if indexed_input else T.tensor3('x')
-        self._target = T.ivector('t')
+        self._target = T.matrix('t') if regression else T.ivector('t')
 
         Encoder.__init__(self, self._input, indexed_input=indexed_input, **kwargs)
         OptimizerAbstraction.__init__(self, **kwargs)

@@ -1,3 +1,4 @@
 
 from neural.loss.naive_entropy import NaiveEntropy
-__all__ = ['NaiveEntropy']
+from neural.loss.rms import RootMeanSquare
+__all__ = ['NaiveEntropy', 'RootMeanSquare']
