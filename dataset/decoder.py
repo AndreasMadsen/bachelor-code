@@ -49,3 +49,13 @@ def memorize(items, classes=9):
         t.astype('int32'),
         classes + 1
     )
+
+def copy(items, T=9, classes=10):
+    X = np.random.randint(1, classes, size=(items, T - 1)).astype('int32')
+
+    t = np.zeros((items, T), dtype='int32')
+    t[:, 0:(T - 1)] = X
+
+    return Dataset(
+        (X / (classes - 1)).astype('float32'), t, classes
+    )

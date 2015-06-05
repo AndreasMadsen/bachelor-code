@@ -30,3 +30,13 @@ def mode(items, Tmin=17, Tmax=20, indexed=False):
         return Dataset(X, t, maxIndex)
     else:
         return Dataset(index_to_indicator(X, 10), t, maxIndex)
+
+def copy(items, T=9, classes=10):
+    X = np.zeros((items, T), dtype='int32')
+    X[:, 0:(T - 1)] = np.random.randint(1, classes, size=(items, T - 1))
+
+    t = (np.copy(X[:, 0:(T - 1)]) / (classes - 1)).astype('float32')
+
+    return Dataset(
+        index_to_indicator(X, classes).astype('float32'), t, classes
+    )
