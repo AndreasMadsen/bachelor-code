@@ -7,7 +7,6 @@ class NaiveEntropy:
     def __init__(self, time=True, log=False):
         self._time = time
         self._expect_log = log
-        pass
 
     def setup(self, batch_size):
         self.batch_size = batch_size
