@@ -9,7 +9,7 @@ from model._latent_abstraction import LatentAbstraction
 thisdir = path.dirname(path.realpath(__file__))
 
 class Doc2Vec:
-    def __init__(self, epochs=100, latent_size=500, verbose=False, **kwargs):
+    def __init__(self, epochs=10, latent_size=500, verbose=False, **kwargs):
         self._verbose = verbose
         if (self._verbose): print('Creating Doc2Vec object')
 
