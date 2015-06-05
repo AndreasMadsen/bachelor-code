@@ -20,8 +20,10 @@ elif (name == 'word2vec-title-l2'):
     threshold = 0.35
 elif (name == 'word2vec-title-cos'):
     threshold = 0.024
-elif (name == 'doc2vec-cos'):
-    threshold = -0.6
+elif (name == 'doc2vec-full-l2'):
+    threshold = 1.35
+elif (name == 'doc2vec-full-cos'):
+    threshold = -0.66
 else:
     raise NotImplementedError('no defined threshold for %s' % name)
 
