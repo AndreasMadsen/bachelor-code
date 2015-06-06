@@ -10,7 +10,7 @@ import numpy as np
 import dataset
 import neural
 
-data = dataset.news.letters(2000).range(1000, 1004)
+data = dataset.news.letters(10).range(0, 4)
 weights = np.load(path.realpath(sys.argv[1]))
 weights = [weights['arr_' + str(file)] for file in range(0, len(weights.files))]
 
@@ -33,6 +33,7 @@ sutskever.push_decoder_layer(neural.layer.Softmax(data.n_classes))
 
 # Setup loss function
 sutskever.set_loss(neural.loss.NaiveEntropy())
+sutskever.set_optimizer(neural.optimizer.RMSgrave())
 
 # Load weights
 sutskever.set_weights(weights)
