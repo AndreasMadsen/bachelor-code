@@ -7,6 +7,8 @@ import os.path as path
 import numpy as np
 import matplotlib.pyplot as plt
 
+thisdir = path.dirname(path.realpath(__file__))
+
 with open(path.realpath(sys.argv[1]), 'r') as infile:
     results = json.load(infile)
 
@@ -24,6 +26,8 @@ for i, result in enumerate(results):
 
 params = {k: np.unique(v) for k, v in params.items()}
 
+print(params)
+
 # Print best and worst
 def print_example(index):
     print('\ttest loss: %f' % test_loss[index])
@@ -40,7 +44,7 @@ print_example(np.argmax(test_loss))
 
 # Specify x,y axis to show
 x_axis = 'learning_rate'
-y_axis = 'momentum'
+y_axis = 'clip'
 
 # Create datamatrix
 test_grid = np.zeros((params[x_axis].size, params[y_axis].size))
@@ -74,16 +78,16 @@ def plot_grid(grid):
 
     return im
 
-fig = plt.figure(figsize=(12, 4))
-plt.subplot(1, 2, 1)
-plt.title('test loss')
+fig = plt.figure(figsize=(8, 3))
+ax = plt.subplot(1, 2, 1)
+plt.title('test loss', fontsize=12)
 plot_grid(test_grid)
 
 plt.subplot(1, 2, 2)
-plt.title('train loss')
+plt.title('train loss', fontsize=12)
 im = plot_grid(train_grid)
 
-fig.subplots_adjust(right=0.8)
+fig.subplots_adjust(left=0.1, right=0.80, wspace=0.28)
 cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.7])
 fig.colorbar(im, cax=cbar_ax)
 
