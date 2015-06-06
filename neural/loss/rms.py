@@ -18,4 +18,4 @@ class RootMeanSquare:
             t = t.ravel()
             y = y.transpose(0, 2, 1).reshape((y.shape[2] * y.shape[0], y.shape[1]))
 
-        return T.sum(T.sqrt(T.sum((y - t)**2, axis=1) / y.shape[1])) / y.shape[0]
+        return T.mean(T.sqrt(T.mean((y - t)**2, axis=1)))
