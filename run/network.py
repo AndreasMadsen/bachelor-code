@@ -15,10 +15,10 @@ sutskever = neural.network.Sutskever(
 # Setup layers
 sutskever.set_encoder_input(neural.layer.Input(10))
 sutskever.push_encoder_layer(neural.layer.LSTM(40))
-sutskever.push_encoder_layer(neural.layer.LSTM(20))
+sutskever.push_encoder_layer(neural.layer.LSTM(8))
 
 sutskever.set_decoder_input(neural.layer.Input(10))
-sutskever.push_decoder_layer(neural.layer.LSTM(20))
+sutskever.push_decoder_layer(neural.layer.LSTM(8))
 sutskever.push_decoder_layer(neural.layer.LSTM(40))
 sutskever.push_decoder_layer(neural.layer.Softmax(10))
 
@@ -29,7 +29,7 @@ sutskever.set_optimizer(neural.optimizer.RMSgrave(clipping_stratagy='L2'))
 # Compile train, test and predict functions
 sutskever.compile()
 
-results = run.minibatch_learn(sutskever, data, test_size=128, epochs=1000)
+results = run.minibatch_learn(sutskever, data, test_size=128, epochs=1000, learning_rate=0.001)
 np.savez_compressed(run.output_file + '.npz', **results)
 
 # show example
