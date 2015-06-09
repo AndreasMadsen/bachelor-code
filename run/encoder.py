@@ -16,7 +16,7 @@ encoder.push_layer(neural.layer.LSTM(40))
 encoder.push_layer(neural.layer.LSTM(data.target.shape[1]))
 
 # Setup loss and optimizer
-encoder.set_loss(neural.loss.RootMeanSquare(time=False))
+encoder.set_loss(neural.loss.MeanSquaredError(time=False))
 encoder.set_optimizer(neural.optimizer.RMSgrave(clipping_stratagy='L2'))
 
 # Compile train, test and predict functions

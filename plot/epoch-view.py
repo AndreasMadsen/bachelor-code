@@ -46,7 +46,7 @@ plt.plot(range(0, epochs), output['train_loss'], color='IndianRed', label='train
 plt.plot(range(0, epochs), output['test_loss'], color='SteelBlue', label='test')
 if (problem_type == 'classification'): plt.axhline(-math.log(1 / n_classes), color='gray')
 plt.legend(prop={'size': 12})
-plt.ylabel('loss [%s]'  % ('entropy' if problem_type == 'classification' else 'RMSE'))
+plt.ylabel('loss [%s]'  % ('entropy' if problem_type == 'classification' else 'MSE'))
 plt.xlabel('epoch')
 plt.ylim(0, plt.ylim()[1])
 

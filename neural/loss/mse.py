@@ -3,7 +3,7 @@ import numpy as np
 import theano
 import theano.tensor as T
 
-class RootMeanSquare:
+class MeanSquaredError:
     def __init__(self, time=True, log=False):
         self._time = time
         self._expect_log = log
@@ -18,4 +18,4 @@ class RootMeanSquare:
             t = t.ravel()
             y = y.transpose(0, 2, 1).reshape((y.shape[2] * y.shape[0], y.shape[1]))
 
-        return T.mean(T.sqrt(T.mean((y - t)**2, axis=1)))
+        return T.mean((y - t)**2)
